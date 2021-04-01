@@ -22,7 +22,8 @@ namespace FileteleporterTransfert
             packetHandler = new Dictionary<NetController.ActionOnTransferer, Action<string[]>>()
             {
                 { NetController.ActionOnTransferer.testCon, TestConnection},
-                { NetController.ActionOnTransferer.discover,  Discover}
+                { NetController.ActionOnTransferer.discover,  Discover},
+                { NetController.ActionOnTransferer.connect,  ConnectToSrv},
             };
         }
 
@@ -36,7 +37,14 @@ namespace FileteleporterTransfert
 
                 NetController.ActionOnTransferer actionOnController = (NetController.ActionOnTransferer)Enum.Parse(typeof(NetController.ActionOnTransferer), dataSplit[0]);
 
-                packetHandler[actionOnController].Invoke(null);
+                string[] parameters = null;
+                if (dataSplit.Length > 1)
+                {
+                    parameters = new string[dataSplit.Length - 1];
+                    Array.Copy(dataSplit, 1, parameters, 0, dataSplit.Length - 1);
+                }
+
+                packetHandler[actionOnController].Invoke(parameters);
             }
             catch (Exception e)
             {
@@ -54,6 +62,12 @@ namespace FileteleporterTransfert
         {
             if(NetDiscovery.udpClient == null)
                 NetDiscovery.Discover();
+        }
+
+        public void ConnectToSrv(string[] parameters)
+        {
+            client.Client client = new client.Client(parameters[0], Environment.MachineName);
+            client.ConnectToServer();
         }
     }
 }

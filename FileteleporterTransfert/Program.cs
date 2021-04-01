@@ -29,10 +29,6 @@ namespace FileteleporterTransfert
             mainThread.Start();
 
             server.Server.Start(50, 26950);
-
-            client.Client client = new client.Client("127.0.0.1", "test");
-            //client.ConnectToServer();
-            //FileteleporterTransfert.Network.NetDiscovery.Discover();
         }
 
         private static void MainThread()

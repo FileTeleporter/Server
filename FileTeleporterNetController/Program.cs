@@ -34,15 +34,22 @@ namespace FileTeleporterNetController
                 EZConsole.Write(" > ", ConsoleColor.Cyan);
                 switch (Console.ReadLine())
                 {
-                    case "test connection":
+                    case string a when a.StartsWith("test connection"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.testCon);
                         EZConsole.WriteLine("cmd", "Testing connection");
                         enterCommand = null;
                         break;
 
-                    case "discover":
+                    case string a when a.StartsWith("discover"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.discover);
                         EZConsole.WriteLine("cmd", "Discovering the network");
+                        break;
+
+                    case string a when a.StartsWith("connect"):
+                        string param = a.Split(' ')[1];
+                        EZConsole.WriteLine(param);
+                        NetController.instance.SendData(NetController.ActionOnTransferer.connect, new string[] { param });
+                        EZConsole.WriteLine("cmd", "connecting to a server");
                         break;
 
                     default:

@@ -18,7 +18,8 @@ namespace FileTeleporterNetController
         public enum ActionOnTransferer
         {
             testCon,
-            discover
+            discover,
+            connect
         }
 
 
