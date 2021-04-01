@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FileTeleporterNetController.Tools;
+using System.Threading;
 
 namespace FileTeleporterNetController
 {
@@ -20,20 +22,34 @@ namespace FileTeleporterNetController
         public void Init()
         {
             packetHandler = new Dictionary<NetController.ActionOnController, Action<string[]>>()
-                {
-                    { NetController.ActionOnController.testCon, TestConnection},
-                };
+            {
+                { NetController.ActionOnController.testCon, TestConnection},
+                { NetController.ActionOnController.discoverReturn, DiscoverReturn }
+            };
         }
 
         public void Handle(byte[] _data)
         {
-            string data = Encoding.ASCII.GetString(_data);
+            try
+            {
+                string data = Encoding.ASCII.GetString(_data);
 
-            string[] dataSplit = data.Split(new char[] { ':', ';'}, StringSplitOptions.RemoveEmptyEntries);
+                string[] dataSplit = data.Split(new char[] { ':', ';'}, StringSplitOptions.RemoveEmptyEntries);
 
-            NetController.ActionOnController actionOnController = (NetController.ActionOnController)Enum.Parse(typeof(NetController.ActionOnController), dataSplit[0]);
+                NetController.ActionOnController actionOnController = (NetController.ActionOnController)Enum.Parse(typeof(NetController.ActionOnController), dataSplit[0]);
+                string[] parameters = null;
+                if(dataSplit.Length > 1)
+                {
+                    parameters = new string[dataSplit.Length - 1];
+                    Array.Copy(dataSplit, 1, parameters, 0, dataSplit.Length - 1);
+                }
 
-            packetHandler[actionOnController].Invoke(null);
+                packetHandler[actionOnController].Invoke(parameters);
+
+            }catch (Exception e)
+            {
+                EZConsole.WriteLine("error", $"Error while handling the packet {e.ToString()}");
+            }
 
         }
 
@@ -41,6 +57,11 @@ namespace FileTeleporterNetController
         {
             EZConsole.WriteLine("handle", "Connection ok");
             Program.EnterCommand();
+        }
+
+        public void DiscoverReturn(string[] parameters)
+        {
+            EZConsole.WriteLine("handle", $"{parameters[0]} {parameters[1]}");
         }
     }
 }

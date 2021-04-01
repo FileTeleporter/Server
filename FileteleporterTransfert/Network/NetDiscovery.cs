@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
 
@@ -62,6 +63,7 @@ namespace FileteleporterTransfert.Network
                     pcName = messageSplited[0];
                     pcIp = messageSplited[1];
                 });
+                NetController.instance.SendData(NetController.ActionOnController.discoverReturn, new string[] { pcName, pcIp });
                 EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
             }
         }

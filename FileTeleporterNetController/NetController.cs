@@ -82,7 +82,7 @@ namespace FileTeleporterNetController
                         for (int i = 0; i < parameters.Length; i++)
                         {
                             dataToSend += parameters[i];
-                            if (i == parameters.Length - 1)
+                            if (i != parameters.Length - 1)
                                 dataToSend += ";";
                         }
                     }
@@ -139,12 +139,15 @@ namespace FileTeleporterNetController
                 byte[] _data = new byte[read];
                 Array.Copy(buffer, _data, read);
 
-                handleNetController.Handle(_data);
+                Task.Run(() =>
+                {
+                    handleNetController.Handle(_data);
+                });
                 rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
             }
-            catch
+            catch(Exception e)
             {
-                EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint}");
+                EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint} {e.ToString()}");
                 rcvSocket.Shutdown(SocketShutdown.Both);
                 rcvSocket.Close();
                 receiveSocket.BeginAccept(BeginAccept_CallBack, null);

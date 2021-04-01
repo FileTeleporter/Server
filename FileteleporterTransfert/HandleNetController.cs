@@ -47,7 +47,7 @@ namespace FileteleporterTransfert
         public void TestConnection(string[] parameters)
         {
             EZConsole.WriteLine("handle", "Connection ok");
-            NetController.instance.SendData(NetController.ActionOnTransferer.testCon);
+            NetController.instance.SendData(NetController.ActionOnController.testCon);
         }
 
         public void Discover(string[] parameters)

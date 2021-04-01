@@ -74,7 +74,7 @@ namespace FileteleporterTransfert
         /// </summary>
         /// <param name="aController">The action to execute</param>
         /// <param name="parameters">A list of params. Must not contain semicolon</param>
-        public void SendData(ActionOnTransferer aController, string[] parameters = null)
+        public void SendData(ActionOnController aController, string[] parameters = null)
         {
             bool part1 = sendSocket.Poll(1000, SelectMode.SelectRead);
             bool part2 = (sendSocket.Available == 0);
@@ -96,7 +96,7 @@ namespace FileteleporterTransfert
                         for (int i = 0; i < parameters.Length; i++)
                         {
                             dataToSend += parameters[i];
-                            if (i == parameters.Length - 1)
+                            if (i != parameters.Length - 1)
                                 dataToSend += ";";
                         }
                     }
@@ -149,7 +149,10 @@ namespace FileteleporterTransfert
                 byte[] _data = new byte[read];
                 Array.Copy(buffer, _data, read);
 
-                handleNetController.Handle(_data);
+                Task.Run(() =>
+                {
+                    handleNetController.Handle(_data);
+                });
                 rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
             }catch
             {
