@@ -17,6 +17,7 @@ namespace FileteleporterTransfert
             EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Blue, ConsoleColor.White);
             EZConsole.AddHeader("handle", "[HANDLENETCONTROLLER]", ConsoleColor.Magenta, ConsoleColor.White);
             EZConsole.AddHeader("error", "[ERROR]", ConsoleColor.Red, ConsoleColor.Red);
+            EZConsole.AddHeader("Discovery", "[DISCOVERY]", ConsoleColor.Yellow, ConsoleColor.White);
 
             NetController netController = new NetController("127.0.0.1", 56236, 56235);
 
@@ -30,7 +31,8 @@ namespace FileteleporterTransfert
             server.Server.Start(50, 26950);
 
             client.Client client = new client.Client("127.0.0.1", "test");
-            client.ConnectToServer();
+            //client.ConnectToServer();
+            //FileteleporterTransfert.Network.NetDiscovery.Discover();
         }
 
         private static void MainThread()

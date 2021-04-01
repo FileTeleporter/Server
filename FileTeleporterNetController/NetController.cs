@@ -11,12 +11,14 @@ namespace FileTeleporterNetController
     {
         public enum ActionOnController
         {
-            testCon
+            testCon,
+            discoverReturn
         }
 
         public enum ActionOnTransferer
         {
-            testCon
+            testCon,
+            discover
         }
 
 

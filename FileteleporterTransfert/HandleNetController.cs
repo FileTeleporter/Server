@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
+using FileteleporterTransfert.Network;
 
 namespace FileteleporterTransfert
 {
@@ -21,6 +22,7 @@ namespace FileteleporterTransfert
             packetHandler = new Dictionary<NetController.ActionOnTransferer, Action<string[]>>()
             {
                 { NetController.ActionOnTransferer.testCon, TestConnection},
+                { NetController.ActionOnTransferer.discover,  Discover}
             };
         }
 
@@ -46,6 +48,12 @@ namespace FileteleporterTransfert
         {
             EZConsole.WriteLine("handle", "Connection ok");
             NetController.instance.SendData(NetController.ActionOnTransferer.testCon);
+        }
+
+        public void Discover(string[] parameters)
+        {
+            if(NetDiscovery.udpClient == null)
+                NetDiscovery.Discover();
         }
     }
 }

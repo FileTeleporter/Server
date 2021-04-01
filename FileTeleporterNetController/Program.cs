@@ -40,6 +40,11 @@ namespace FileTeleporterNetController
                         enterCommand = null;
                         break;
 
+                    case "discover":
+                        NetController.instance.SendData(NetController.ActionOnTransferer.discover);
+                        EZConsole.WriteLine("cmd", "Discovering the network");
+                        break;
+
                     default:
                         EZConsole.WriteLine("cmd", "Unknown command");
                         break;
