@@ -29,12 +29,16 @@ namespace FileTeleporterNetController
         private Socket sendSocket;
         private Socket receiveSocket;
 
+        private HandleNetController handleNetController;
+
         public NetController(string ip, int portSend, int portReceive)
         {
             this.ip = ip;
             this.portSend = portSend;
             this.portReceive = portReceive;
+            handleNetController = new HandleNetController();
             instance = this;
+            ConnectSendSocket();
             ConnectReceiveSocket();
         }
 
@@ -48,8 +52,15 @@ namespace FileTeleporterNetController
 
         public void ConnectToRemote(IAsyncResult result)
         {
-            sendSocket.EndConnect(result);
-            EZConsole.WriteLine("NetController", "Send socket connected");
+            try
+            {
+                sendSocket.EndConnect(result);
+                EZConsole.WriteLine("NetController", "Send socket connected");
+            }
+            catch
+            {
+                ConnectSendSocket();
+            }
         }
 
         /// <summary>
@@ -61,22 +72,29 @@ namespace FileTeleporterNetController
         {
             Task.Run(() =>
             {
-                string dataToSend = $"{aController}:";
-                if(parameters != null)
+                try
                 {
-                    for (int i = 0; i < parameters.Length; i++)
+                    string dataToSend = $"{aController}:";
+                    if(parameters != null)
                     {
-                        dataToSend += parameters[i];
-                        if (i == parameters.Length - 1)
-                            dataToSend += ";";
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            dataToSend += parameters[i];
+                            if (i == parameters.Length - 1)
+                                dataToSend += ";";
+                        }
                     }
-                }
-                byte[] bytesSent = Encoding.ASCII.GetBytes(dataToSend);
-                if (sendSocket == null)
-                    return;
+                    byte[] bytesSent = Encoding.ASCII.GetBytes(dataToSend);
+                    if (sendSocket == null)
+                        return;
 
-                // Send data to the controller
-                sendSocket.Send(bytesSent, bytesSent.Length, 0);
+                    // Send data to the controller
+                    sendSocket.Send(bytesSent, bytesSent.Length, 0);
+                }
+                catch
+                {
+                    EZConsole.WriteLine("error", "Error while sending the data");
+                }
             });
         }
         #endregion
@@ -84,6 +102,7 @@ namespace FileTeleporterNetController
         #region Receive
         const int BUFFERSIZE = 1024;
         byte[] buffer = new byte[BUFFERSIZE];
+        private Socket rcvSocket;
 
         private void ConnectReceiveSocket()
         {
@@ -97,9 +116,9 @@ namespace FileTeleporterNetController
         }
         private void BeginAccept_CallBack(IAsyncResult result)
         {
-            receiveSocket = receiveSocket.EndAccept(result);
+            rcvSocket = receiveSocket.EndAccept(result);
 
-            receiveSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
+            rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
         }
 
 
@@ -107,24 +126,26 @@ namespace FileTeleporterNetController
         {
             try
             {
-                int read = receiveSocket.EndReceive(ar);
+                int read = rcvSocket.EndReceive(ar);
 
                 if (read <= 0)
                 {
-                    receiveSocket.Disconnect(true);
-                    EZConsole.WriteLine("NetController", $"Connection closed with {receiveSocket.RemoteEndPoint}");
+                    rcvSocket.Disconnect(true);
+                    EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint}");
                 }
 
                 byte[] _data = new byte[read];
                 Array.Copy(buffer, _data, read);
 
-                EZConsole.WriteLine(Encoding.ASCII.GetString(_data));
-                receiveSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
+                handleNetController.Handle(_data);
+                rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
             }
             catch
             {
-                receiveSocket.Disconnect(true);
-                EZConsole.WriteLine("NetController", $"Connection closed with {receiveSocket.RemoteEndPoint}");
+                EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint}");
+                rcvSocket.Shutdown(SocketShutdown.Both);
+                rcvSocket.Close();
+                receiveSocket.BeginAccept(BeginAccept_CallBack, null);
             }
         }
         #endregion

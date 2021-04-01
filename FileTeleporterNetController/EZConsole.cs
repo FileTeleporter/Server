@@ -54,6 +54,7 @@ namespace FileTeleporterNetController.Tools
         /// <param name="text">The text to write</param>
         public static void WriteLine(string headerType, string text)
         {
+            Console.SetCursorPosition(0, Console.CursorTop);
             if (senderHeaders.ContainsKey(headerType))
             {
                 Header header = senderHeaders[headerType];
