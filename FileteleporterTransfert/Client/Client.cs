@@ -47,6 +47,100 @@ namespace client
             tcp.Connect(); // Connect tcp, udp gets connected once tcp is done
         }
 
+        public class TCPFileSend
+        {
+            public TcpClient socket;
+
+            private NetworkStream stream;
+            private Packet receivedData;
+            private byte[] receiveBuffer;
+            private int dataBufferSize;
+
+            /// <summary>Attempts to connect to the server via TCP.</summary>
+            public void Connect(int dataBufferSize, string ip, int port)
+            {
+                this.dataBufferSize = dataBufferSize;
+                socket = new TcpClient
+                {
+                    ReceiveBufferSize = dataBufferSize,
+                    SendBufferSize = dataBufferSize
+                };
+
+
+                receiveBuffer = new byte[dataBufferSize];
+                socket.BeginConnect(ip, port, ConnectCallback, socket);
+            }
+
+            /// <summary>Initializes the newly connected client's TCP-related info.</summary>
+            private void ConnectCallback(IAsyncResult _result)
+            {
+                socket.EndConnect(_result);
+
+                if (!socket.Connected)
+                {
+                    return;
+                }
+
+                stream = socket.GetStream();
+
+                receivedData = new Packet();
+
+                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+            }
+
+            /// <summary>Sends data to the client via TCP.</summary>
+            /// <param name="_packet">The packet to send.</param>
+            public void SendData(byte[] file)
+            {
+                Console.WriteLine(file.Length);
+                try
+                {
+                    if (socket != null)
+                    {
+                        stream.BeginWrite(file, 0, file.Length, null, null); // Send data to server
+                    }
+                }
+                catch (Exception _ex)
+                {
+                    Console.WriteLine($"Error sending data to server via TCP: {_ex}");
+                }
+            }
+
+            /// <summary>Reads incoming data from the stream.</summary>
+            private void ReceiveCallback(IAsyncResult _result)
+            {
+                try
+                {
+                    int _byteLength = stream.EndRead(_result);
+                    if (_byteLength <= 0)
+                    {
+                        instance.Disconnect();
+                        return;
+                    }
+
+                    byte[] _data = new byte[_byteLength];
+                    Array.Copy(receiveBuffer, _data, _byteLength);
+                    //do something if data is recieved
+                    stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+                }
+                catch
+                {
+                    Disconnect();
+                }
+            }
+
+
+            public void Disconnect()
+            {
+                instance.Disconnect();
+
+                stream = null;
+                receivedData = null;
+                receiveBuffer = null;
+                socket = null;
+            }
+        }
+
         public class TCP
         {
             public TcpClient socket;

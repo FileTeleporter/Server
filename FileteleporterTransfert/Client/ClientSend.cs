@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Net.Sockets;
+using static client.Client;
 
 namespace client
 {
@@ -37,6 +38,24 @@ namespace client
 
                 SendTCPData(_packet);
             }
+        }
+
+        private static TCPFileSend tcp;
+        public static void SendFileTestPrepare()
+        {
+            tcp = new TCPFileSend();
+            tcp.Connect(Constants.BUFFER_FOR_FILE, "127.0.0.1", 60589);
+        }
+
+        public static void SendFileTest(byte[] file)
+        {
+            tcp.SendData(file);
+        }
+
+        public static void SendFileDisconnect()
+        {
+            tcp.Disconnect();
+            tcp = null;
         }
         #endregion
     }

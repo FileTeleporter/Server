@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using FileteleporterTransfert.Network;
 using FileteleporterTransfert.Tools;
 
 namespace FileteleporterTransfert
@@ -8,6 +10,7 @@ namespace FileteleporterTransfert
     class Program
     {
         private static bool isRunning = false;
+        private static TcpListener tcpListener;
 
         static void Main(string[] args)
         {
@@ -31,6 +34,24 @@ namespace FileteleporterTransfert
             server.Server.Start(50, 26950);
 
             Network.NetDiscovery.Discover();
+
+            tcpListener = new TcpListener(IPAddress.Any, 60589);
+            tcpListener.Start();
+            tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
+
+            SendFile sendFile = new SendFile(@"G:\VM\Fedora-Server-dvd-x86_64-33-1.2.iso");
+            sendFile.SendPartAsync(Constants.BUFFER_FOR_FILE);
+        }
+
+        private static server.Client.TCPFileSend tcpFileSend;
+        private static void TCPConnectCallback(IAsyncResult _result)
+        {
+            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
+            tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
+            Console.WriteLine($"Incoming connection from {_client.Client.RemoteEndPoint}...");
+
+            tcpFileSend = new server.Client.TCPFileSend();
+            tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
         }
 
         private static void MainThread()

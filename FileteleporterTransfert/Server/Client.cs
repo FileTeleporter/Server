@@ -27,6 +27,87 @@ namespace server
             udp = new UDP(id);
         }
 
+        public class TCPFileSend
+        {
+            public TcpClient socket;
+            private NetworkStream stream;
+            private Packet receivedData;
+            private byte[] receiveBuffer;
+            private int dataBufferSize;
+
+            /// <summary>Initializes the newly connected client's TCP-related info.</summary>
+            /// <param name="_socket">The TcpClient instance of the newly connected client.</param>
+            public void Connect(TcpClient _socket, int dataBufferSize)
+            {
+                this.dataBufferSize = dataBufferSize;
+                socket = _socket;
+                socket.ReceiveBufferSize = dataBufferSize;
+                socket.SendBufferSize = dataBufferSize;
+
+                stream = socket.GetStream();
+
+                receivedData = new Packet();
+                receiveBuffer = new byte[dataBufferSize];
+
+                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+            }
+
+            /// <summary>Sends data to the client via TCP.</summary>
+            /// <param name="_packet">The packet to send.</param>
+            public void SendData(Packet _packet)
+            {
+                try
+                {
+                    if (socket != null)
+                    {
+                        stream.BeginWrite(_packet.ToArray(), 0, _packet.Length(), null, null); // Send data to appropriate client
+                    }
+                }
+                catch (Exception _ex)
+                {
+                    Console.WriteLine($"Error sending data");
+                }
+            }
+
+            /// <summary>Reads incoming data from the stream.</summary>
+            private void ReceiveCallback(IAsyncResult _result)
+            {
+                try
+                {
+                    int _byteLength = stream.EndRead(_result);
+                    if (_byteLength <= 0)
+                    {
+                        Disconnect();
+                        return;
+                    }
+
+                    byte[] _data = new byte[_byteLength];
+                    Array.Copy(receiveBuffer, _data, _byteLength);
+
+                    string fileName = "result2.dat";
+                    using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Append)))
+                    {
+                        writer.Write(_data);
+                    }
+                    stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+                }
+                catch (Exception _ex)
+                {
+                    Console.WriteLine($"Error receiving TCP data: {_ex}");
+                    Disconnect();
+                }
+            }
+            /// <summary>Closes and cleans up the TCP connection.</summary>
+            public void Disconnect()
+            {
+                socket.Close();
+                stream = null;
+                receivedData = null;
+                receiveBuffer = null;
+                socket = null;
+            }
+        }
+
         public class TCP
         {
             public TcpClient socket;

@@ -21,5 +21,31 @@ namespace server
                 EZConsole.WriteLine("Server", $"Player \"{_username}\" (ID: {_fromClient}) has assumed the wrong client ID ({_clientIdCheck})!");
             }
         }
+
+        public static void ReceiveFile(int _fromClient, Packet _packet)
+        {
+            Console.WriteLine("receiving");
+            int length = _packet.ReadInt();
+            byte[] file = _packet.ReadBytes(length);
+            Console.WriteLine("Finished receiving");
+            string fileName = "result.dat";
+            using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Append)))
+            {
+                writer.Write(file);
+            }
+            Console.WriteLine("finished");
+
+            //public static void PlayerMovement(int _fromClient, Packet _packet)
+            //{
+            //    bool[] _inputs = new bool[_packet.ReadInt()];
+            //    for (int i = 0; i < _inputs.Length; i++)
+            //    {
+            //        _inputs[i] = _packet.ReadBool();
+            //    }
+            //    Quaternion _rotation = _packet.ReadQuaternion();
+
+            //    Server.clients[_fromClient].player.SetInput(_inputs, _rotation);
+            //}
+        }
     }
 }

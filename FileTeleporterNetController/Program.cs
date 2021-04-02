@@ -12,6 +12,12 @@ namespace FileTeleporterNetController
         static void Main(string[] args)
         {
             EZConsole.WriteLine("Welcome to the fileteleporter net controller", ConsoleColor.Cyan);
+            EZConsole.WriteLine("Commandes : " + Environment.NewLine + 
+                                "   test connection" + Environment.NewLine + 
+                                "   discover" + Environment.NewLine +
+                                "   connect <ip address>" + Environment.NewLine +
+                                "   disconnect" + Environment.NewLine, ConsoleColor.Cyan);
+
             EZConsole.AddHeader("cmd", "[CMD]", ConsoleColor.Blue, ConsoleColor.White);
             EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Blue, ConsoleColor.White);
             EZConsole.AddHeader("handle", "[HANDLENETCONTROLLER]", ConsoleColor.Magenta, ConsoleColor.White);
