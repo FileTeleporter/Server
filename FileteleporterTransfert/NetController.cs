@@ -20,6 +20,7 @@ namespace FileteleporterTransfert
             testCon,
             discover,
             connect,
+            disconnect
         }
 
 
@@ -120,8 +121,8 @@ namespace FileteleporterTransfert
         private void ConnectReceiveSocket()
         {
 
-            IPEndPoint ipe = new IPEndPoint(IPAddress.Any, portReceive);
-            receiveSocket = new Socket(IPAddress.Any.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(ip), portReceive);
+            receiveSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             receiveSocket.Bind(ipe);
             receiveSocket.Listen(10);

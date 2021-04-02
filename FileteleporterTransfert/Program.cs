@@ -29,6 +29,8 @@ namespace FileteleporterTransfert
             mainThread.Start();
 
             server.Server.Start(50, 26950);
+
+            Network.NetDiscovery.Discover();
         }
 
         private static void MainThread()

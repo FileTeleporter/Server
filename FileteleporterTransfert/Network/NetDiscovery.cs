@@ -15,6 +15,7 @@ namespace FileteleporterTransfert.Network
     {
         private static int discoveryPort = 56237;
         public static UdpClient udpClient;
+        public static Dictionary<IPAddress, string> machines = new Dictionary<IPAddress, string>();
         public static void Discover()
         {
             // ip thand broadcast
@@ -63,8 +64,16 @@ namespace FileteleporterTransfert.Network
                     pcName = messageSplited[0];
                     pcIp = messageSplited[1];
                 });
-                NetController.instance.SendData(NetController.ActionOnController.discoverReturn, new string[] { pcName, pcIp });
+                machines.Add(IPAddress.Parse(pcIp), pcName);
                 EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
+            }
+        }
+
+        public static void GetDiscoveredMachine()
+        {
+            foreach (KeyValuePair<IPAddress, string> keyValuePair in machines)
+            {
+                NetController.instance.SendData(NetController.ActionOnController.discoverReturn, new string[] { keyValuePair.Key.ToString(), keyValuePair.Value });
             }
         }
 

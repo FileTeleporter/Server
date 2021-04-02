@@ -47,9 +47,12 @@ namespace FileTeleporterNetController
 
                     case string a when a.StartsWith("connect"):
                         string param = a.Split(' ')[1];
-                        EZConsole.WriteLine(param);
                         NetController.instance.SendData(NetController.ActionOnTransferer.connect, new string[] { param });
                         EZConsole.WriteLine("cmd", "connecting to a server");
+                        break;
+                    case string a when a.StartsWith("disconnect"):
+                        NetController.instance.SendData(NetController.ActionOnTransferer.disconnect);
+                        EZConsole.WriteLine("cmd", "disconnect");
                         break;
 
                     default:

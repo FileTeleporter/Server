@@ -19,7 +19,8 @@ namespace FileTeleporterNetController
         {
             testCon,
             discover,
-            connect
+            connect,
+            disconnect
         }
 
 
@@ -110,8 +111,8 @@ namespace FileTeleporterNetController
         private void ConnectReceiveSocket()
         {
 
-            IPEndPoint ipe = new IPEndPoint(IPAddress.Any, portReceive);
-            receiveSocket = new Socket(IPAddress.Any.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(ip), portReceive);
+            receiveSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             receiveSocket.Bind(ipe);
             receiveSocket.Listen(10);

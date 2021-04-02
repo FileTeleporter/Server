@@ -24,6 +24,7 @@ namespace FileteleporterTransfert
                 { NetController.ActionOnTransferer.testCon, TestConnection},
                 { NetController.ActionOnTransferer.discover,  Discover},
                 { NetController.ActionOnTransferer.connect,  ConnectToSrv},
+                { NetController.ActionOnTransferer.disconnect, Disconnect }
             };
         }
 
@@ -60,14 +61,30 @@ namespace FileteleporterTransfert
 
         public void Discover(string[] parameters)
         {
-            if(NetDiscovery.udpClient == null)
-                NetDiscovery.Discover();
+            NetDiscovery.GetDiscoveredMachine();
         }
 
         public void ConnectToSrv(string[] parameters)
         {
-            client.Client client = new client.Client(parameters[0], Environment.MachineName);
-            client.ConnectToServer();
+            if (client.Client.instance == null)
+            {
+                EZConsole.WriteLine("handle", $"Connect to {parameters[0]}");
+                client.Client connectClient = new client.Client(parameters[0], Environment.MachineName);
+                client.Client.instance.ConnectToServer();
+            }
+            else
+            {
+                EZConsole.WriteLine("handle", $"Client already connected");
+            }
+        }
+
+        public void Disconnect(string[] parameters)
+        {
+            if (client.Client.instance != null)
+            {
+                EZConsole.WriteLine("handle", $"Disconnect from {client.Client.instance.ip}");
+                client.Client.instance.Disconnect();
+            }
         }
     }
 }

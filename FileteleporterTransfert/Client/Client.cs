@@ -110,7 +110,7 @@ namespace client
                     int _byteLength = stream.EndRead(_result);
                     if (_byteLength <= 0)
                     {
-                        instance.Disconnect();
+                        Disconnect();
                         return;
                     }
 
@@ -182,7 +182,8 @@ namespace client
             /// <summary>Disconnects from the server and cleans up the TCP connection.</summary>
             private void Disconnect()
             {
-                instance.Disconnect();
+                if(instance != null)
+                    instance.Disconnect();
 
                 stream = null;
                 receivedData = null;
@@ -244,7 +245,7 @@ namespace client
 
                     if (_data.Length < 4)
                     {
-                        instance.Disconnect();
+                        Disconnect();
                         return;
                     }
 
@@ -279,7 +280,8 @@ namespace client
             /// <summary>Disconnects from the server and cleans up the UDP connection.</summary>
             private void Disconnect()
             {
-                instance.Disconnect();
+                if(instance != null)
+                    instance.Disconnect();
 
                 endPoint = null;
                 socket = null;
@@ -302,13 +304,16 @@ namespace client
         {
             Disconnect();
         }
-        private void Disconnect()
+        public void Disconnect()
         {
             if (isConnected)
             {
                 isConnected = false;
-                tcp.socket.Close();
-                udp.socket.Close();
+                if(tcp.socket != null)
+                    tcp.socket.Close();
+                if(udp.socket != null)
+                    udp.socket.Close();
+                instance = null;
 
                 EZConsole.WriteLine("Client", "Disconnected from server.");
             }
