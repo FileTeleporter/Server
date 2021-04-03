@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using FileteleporterTransfert.Network;
 using FileteleporterTransfert.Tools;
 
@@ -21,6 +22,7 @@ namespace FileteleporterTransfert
             EZConsole.AddHeader("handle", "[HANDLENETCONTROLLER]", ConsoleColor.Magenta, ConsoleColor.White);
             EZConsole.AddHeader("error", "[ERROR]", ConsoleColor.Red, ConsoleColor.Red);
             EZConsole.AddHeader("Discovery", "[DISCOVERY]", ConsoleColor.Yellow, ConsoleColor.White);
+            EZConsole.AddHeader("SendFile", "[SENDFILE]", ConsoleColor.DarkCyan, ConsoleColor.Cyan);
 
             NetController netController = new NetController("127.0.0.1", 56236, 56235);
 
@@ -35,23 +37,25 @@ namespace FileteleporterTransfert
 
             Network.NetDiscovery.Discover();
 
+            // start listening for a file transfer
             tcpListener = new TcpListener(IPAddress.Any, 60589);
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
-
-            SendFile sendFile = new SendFile(@"G:\VM\Fedora-Server-dvd-x86_64-33-1.2.iso");
-            sendFile.SendPartAsync(Constants.BUFFER_FOR_FILE);
         }
 
+        // multiple transfer at the same times might corrupt files need to check the code below
         private static server.Client.TCPFileSend tcpFileSend;
         private static void TCPConnectCallback(IAsyncResult _result)
         {
-            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
-            tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
-            Console.WriteLine($"Incoming connection from {_client.Client.RemoteEndPoint}...");
+            Task.Run(() =>
+            {
+                TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
+                tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
+                EZConsole.WriteLine("SendFile", $"Incoming connection from {_client.Client.RemoteEndPoint}...");
 
-            tcpFileSend = new server.Client.TCPFileSend();
-            tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
+                tcpFileSend = new server.Client.TCPFileSend();
+                tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
+            });
         }
 
         private static void MainThread()

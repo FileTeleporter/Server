@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 using static client.Client;
+using System.Threading.Tasks;
 
 namespace client
 {
@@ -40,11 +41,22 @@ namespace client
             }
         }
 
+        public static void AskForSendFile(string fileName, long fileSize)
+        {
+            using (Packet _packet = new Packet((int)ClientPackets.askSendFile))
+            {
+                _packet.Write(fileName);
+                _packet.Write(fileSize);
+
+                SendTCPData(_packet);
+            }
+        }
+
         private static TCPFileSend tcp;
-        public static void SendFileTestPrepare()
+        public static void SendFileTestPrepare(string ip, Action canReceiveCallBack)
         {
             tcp = new TCPFileSend();
-            tcp.Connect(Constants.BUFFER_FOR_FILE, "127.0.0.1", 60589);
+            tcp.Connect(Constants.BUFFER_FOR_FILE, ip, 60589, canReceiveCallBack);
         }
 
         public static void SendFileTest(byte[] file)

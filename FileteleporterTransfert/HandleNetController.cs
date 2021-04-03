@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
 using FileteleporterTransfert.Network;
+using System.IO;
 
 namespace FileteleporterTransfert
 {
@@ -24,7 +25,8 @@ namespace FileteleporterTransfert
                 { NetController.ActionOnTransferer.testCon, TestConnection},
                 { NetController.ActionOnTransferer.discover,  Discover},
                 { NetController.ActionOnTransferer.connect,  ConnectToSrv},
-                { NetController.ActionOnTransferer.disconnect, Disconnect }
+                { NetController.ActionOnTransferer.disconnect, Disconnect },
+                { NetController.ActionOnTransferer.transfer, Transfer }
             };
         }
 
@@ -34,7 +36,7 @@ namespace FileteleporterTransfert
             {
                 string data = Encoding.ASCII.GetString(_data);
 
-                string[] dataSplit = data.Split(new char[] { ':', ';'}, StringSplitOptions.RemoveEmptyEntries);
+                string[] dataSplit = data.Split(new char[] { '@', ';'}, StringSplitOptions.RemoveEmptyEntries);
 
                 NetController.ActionOnTransferer actionOnController = (NetController.ActionOnTransferer)Enum.Parse(typeof(NetController.ActionOnTransferer), dataSplit[0]);
 
@@ -84,6 +86,43 @@ namespace FileteleporterTransfert
             {
                 EZConsole.WriteLine("handle", $"Disconnect from {client.Client.instance.ip}");
                 client.Client.instance.Disconnect();
+            }
+        }
+
+        // store the path for the transfer
+        public List<string> pendingTransfer = new List<string>();
+
+        public void Transfer(string[] parameters)
+        {
+            switch(parameters[0])
+            {
+                case string a when a.StartsWith("validate"):
+                    if(server.ServerHandle.pendingTransfer.Count > 0)
+                    {
+                        server.ServerSend.ValidateDenyTransfer(true);
+                        EZConsole.WriteLine("handle", $"Transfer has been validated");
+                    }
+                    else
+                    {
+                        EZConsole.WriteLine("handle", $"No pending transfer");
+                    }
+                    break;
+                case string a when a.StartsWith("deny"):
+                    if (server.ServerHandle.pendingTransfer.Count > 0)
+                    {
+                        server.ServerSend.ValidateDenyTransfer(false);
+                        EZConsole.WriteLine("handle", $"Transfer has been denied");
+                    }
+                    else
+                    {
+                        EZConsole.WriteLine("handle", $"No pending transfer");
+                    }
+                    break;
+                default:
+                    pendingTransfer.Add(parameters[0]);
+                    // filename, filelength
+                    client.ClientSend.AskForSendFile(Path.GetFileName(parameters[0]), new System.IO.FileInfo(parameters[0]).Length);
+                    break;
             }
         }
     }

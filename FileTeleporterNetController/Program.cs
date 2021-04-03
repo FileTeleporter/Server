@@ -16,7 +16,9 @@ namespace FileTeleporterNetController
                                 "   test connection" + Environment.NewLine + 
                                 "   discover" + Environment.NewLine +
                                 "   connect <ip address>" + Environment.NewLine +
-                                "   disconnect" + Environment.NewLine, ConsoleColor.Cyan);
+                                "   disconnect" + Environment.NewLine +
+                                "   transfer <file>", ConsoleColor.Cyan);
+            EZConsole.WriteLine("connect to a pc before transfering any files");
 
             EZConsole.AddHeader("cmd", "[CMD]", ConsoleColor.Blue, ConsoleColor.White);
             EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Blue, ConsoleColor.White);
@@ -59,6 +61,11 @@ namespace FileTeleporterNetController
                     case string a when a.StartsWith("disconnect"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.disconnect);
                         EZConsole.WriteLine("cmd", "disconnect");
+                        break;
+
+                    case string a when a.StartsWith("transfer"):
+                        string transParam = a.Split(' ')[1];
+                        NetController.instance.SendData(NetController.ActionOnTransferer.transfer, new string[] { transParam });
                         break;
 
                     default:

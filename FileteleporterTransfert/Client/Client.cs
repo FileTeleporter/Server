@@ -52,13 +52,15 @@ namespace client
             public TcpClient socket;
 
             private NetworkStream stream;
-            private Packet receivedData;
             private byte[] receiveBuffer;
             private int dataBufferSize;
 
+            private Action canReceiveCallBack;
+
             /// <summary>Attempts to connect to the server via TCP.</summary>
-            public void Connect(int dataBufferSize, string ip, int port)
+            public void Connect(int dataBufferSize, string ip, int port, Action canReceiveCallBack)
             {
+                this.canReceiveCallBack = canReceiveCallBack;
                 this.dataBufferSize = dataBufferSize;
                 socket = new TcpClient
                 {
@@ -83,16 +85,14 @@ namespace client
 
                 stream = socket.GetStream();
 
-                receivedData = new Packet();
-
                 stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+                canReceiveCallBack?.Invoke();
             }
 
             /// <summary>Sends data to the client via TCP.</summary>
             /// <param name="_packet">The packet to send.</param>
             public void SendData(byte[] file)
             {
-                Console.WriteLine(file.Length);
                 try
                 {
                     if (socket != null)
@@ -132,10 +132,9 @@ namespace client
 
             public void Disconnect()
             {
-                instance.Disconnect();
+                //instance.Disconnect();
 
                 stream = null;
-                receivedData = null;
                 receiveBuffer = null;
                 socket = null;
             }
@@ -388,6 +387,7 @@ namespace client
             packetHandlers = new Dictionary<int, PacketHandler>()
             {
                 { (int)ServerPackets.welcome, ClientHandle.Welcome },
+                { (int)ServerPackets.validateDenyTransfer, ClientHandle.ValidateDenyTransfer }
             };
             EZConsole.WriteLine("Client", "Initialized packets.");
         }

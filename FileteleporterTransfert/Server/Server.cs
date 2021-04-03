@@ -130,6 +130,7 @@ namespace server
             packetHandlers = new Dictionary<int, PacketHandler>()
             {
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
+                { (int)ClientPackets.askSendFile, ServerHandle.AskSendFile },
             };
             EZConsole.WriteLine("Server", "Initialized packets.");
         }

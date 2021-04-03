@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Numerics;
 using System.IO;
 using FileteleporterTransfert.Tools;
+using System.Threading.Tasks;
 
 namespace server
 {
@@ -15,8 +16,6 @@ namespace server
 
         public int id;
         public string name;
-        public string carte;
-        //public Player player;
         public TCP tcp;
         public UDP udp;
 

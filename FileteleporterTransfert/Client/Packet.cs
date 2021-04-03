@@ -9,12 +9,14 @@ namespace client
     public enum ServerPackets
     {
         welcome = 1,
+        validateDenyTransfer
     }
 
     /// <summary>Sent from client to server.</summary>
     public enum ClientPackets
     {
         welcomeReceived = 1,
+        askSendFile
     }
 
     public class Packet : IDisposable

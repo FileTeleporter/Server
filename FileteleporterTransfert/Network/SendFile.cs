@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 using client;
+using FileteleporterTransfert.Tools;
 
 namespace FileteleporterTransfert.Network
 {
@@ -15,36 +16,48 @@ namespace FileteleporterTransfert.Network
         private int fileLength;
         int filePos;
         public bool finished;
+        private string ip;
+        private int bufferSize;
 
-        public SendFile(string filePath)
+        public SendFile(string filePath, string ip)
         {
             file = File.ReadAllBytes(filePath);
+            this.ip = ip;
             fileLength = file.Length;
             filePos = 0;
             finished = false;
         }
 
-        public void SendPartAsync(int nbByte)
+        public async void SendPartAsync(int nbByte)
+        {
+            bufferSize = nbByte;
+            Connect();
+        }
+
+        public void Connect()
+        {
+            ClientSend.SendFileTestPrepare(ip, SendAsync);
+        }
+
+        public async void SendAsync()
         {
             long timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            Task t = Task.Run(() => SendPart(nbByte));
-            t.Wait();
+            await Task.Run(() => SendPart());
             long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
             long timeElapsed = timeEnd - timeStart;
-            Console.WriteLine($"\n" +
+            EZConsole.WriteLine("SendFile", $"\n" +
                     $"----------------------------------------\n" +
-                    $"{file.Length/ 1048576} Mio/s transmited in {timeElapsed} sec\n" +
-                    $"With a speed of {(file.Length / timeElapsed)/1048576} Mio/s\n" +
+                    $"{file.Length / 1048576} Mio transmited in {timeElapsed} sec\n" +
+                    $"With a speed of {(file.Length / timeElapsed) / 1048576} Mio/s\n" +
                     $"----------------------------------------");
         }
 
-        public void SendPart(int nbByte)
+        private void SendPart()
         {
-            ClientSend.SendFileTestPrepare();
-            byte[] fileSmall = new byte[nbByte];
+            byte[] fileSmall = new byte[bufferSize];
             while(!finished)
             {
-                if(fileLength < filePos + nbByte)
+                if(fileLength < filePos + bufferSize)
                 {
                     if(fileLength == filePos)
                     {

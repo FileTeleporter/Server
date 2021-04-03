@@ -12,7 +12,8 @@ namespace FileTeleporterNetController
         public enum ActionOnController
         {
             testCon,
-            discoverReturn
+            discoverReturn,
+            transferAck
         }
 
         public enum ActionOnTransferer
@@ -20,7 +21,8 @@ namespace FileTeleporterNetController
             testCon,
             discover,
             connect,
-            disconnect
+            disconnect,
+            transfer,
         }
 
 
@@ -78,7 +80,7 @@ namespace FileTeleporterNetController
             {
                 try
                 {
-                    string dataToSend = $"{aController}:";
+                    string dataToSend = $"{aController}@";
                     if(parameters != null)
                     {
                         for (int i = 0; i < parameters.Length; i++)

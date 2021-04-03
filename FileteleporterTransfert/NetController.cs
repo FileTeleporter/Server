@@ -12,7 +12,8 @@ namespace FileteleporterTransfert
         public enum ActionOnController
         {
             testCon,
-            discoverReturn
+            discoverReturn,
+            transferAck
         }
 
         public enum ActionOnTransferer
@@ -20,7 +21,8 @@ namespace FileteleporterTransfert
             testCon,
             discover,
             connect,
-            disconnect
+            disconnect,
+            transfer,
         }
 
 
@@ -32,7 +34,7 @@ namespace FileteleporterTransfert
 
         private Socket sendSocket;
         private Socket receiveSocket;
-        private HandleNetController handleNetController;
+        public HandleNetController handleNetController;
 
 
         public NetController(string ip, int portSend, int portReceive)
@@ -92,7 +94,7 @@ namespace FileteleporterTransfert
             {
                 Task.Run(() =>
                 {
-                    string dataToSend = $"{aController}:";
+                    string dataToSend = $"{aController}@";
                     if (parameters != null)
                     {
                         for (int i = 0; i < parameters.Length; i++)

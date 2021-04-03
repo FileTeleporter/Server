@@ -93,6 +93,17 @@ namespace server
                 SendTCPData(_toClient, _packet);
             }
         }
+
+        public static void ValidateDenyTransfer(bool validate)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.validateDenyTransfer))
+            {
+                _packet.Write(validate);
+
+                SendTCPData(ServerHandle.pendingTransfer[0], _packet);
+                ServerHandle.pendingTransfer.RemoveAt(0);
+            }
+        }
         #endregion
     }
 }
