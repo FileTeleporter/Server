@@ -68,6 +68,7 @@ namespace server
                 }
             }
 
+            private byte[] _data;
             /// <summary>Reads incoming data from the stream.</summary>
             private void ReceiveCallback(IAsyncResult _result)
             {
@@ -79,14 +80,14 @@ namespace server
                         Disconnect();
                         return;
                     }
-
-                    byte[] _data = new byte[_byteLength];
+                    GC.Collect();
+                    _data = new byte[_byteLength];
                     Array.Copy(receiveBuffer, _data, _byteLength);
 
                     string fileName = "result2.dat";
-                    using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Append)))
+                    using(FileStream file = File.Create(fileName))
                     {
-                        writer.Write(_data);
+                        file.WriteAsync(_data);
                     }
                     stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
                 }

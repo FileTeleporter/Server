@@ -51,24 +51,6 @@ namespace client
                 SendTCPData(_packet);
             }
         }
-
-        private static TCPFileSend tcp;
-        public static void SendFileTestPrepare(string ip, Action canReceiveCallBack)
-        {
-            tcp = new TCPFileSend();
-            tcp.Connect(Constants.BUFFER_FOR_FILE, ip, 60589, canReceiveCallBack);
-        }
-
-        public static void SendFileTest(byte[] file)
-        {
-            tcp.SendData(file);
-        }
-
-        public static void SendFileDisconnect()
-        {
-            tcp.Disconnect();
-            tcp = null;
-        }
         #endregion
     }
 }
