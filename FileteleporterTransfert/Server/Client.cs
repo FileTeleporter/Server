@@ -69,6 +69,8 @@ namespace server
             }
 
             private byte[] _data;
+            // pls only use this type of file stream, if use File.Open perfs will suffer
+            private FileStream fileStream = File.OpenWrite("result2.dat");
             /// <summary>Reads incoming data from the stream.</summary>
             private void ReceiveCallback(IAsyncResult _result)
             {
@@ -84,11 +86,7 @@ namespace server
                     _data = new byte[_byteLength];
                     Array.Copy(receiveBuffer, _data, _byteLength);
 
-                    string fileName = "result2.dat";
-                    using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Append)))
-                    {
-                        writer.Write(_data);
-                    }
+                    fileStream.Write(_data, 0, _data.Length);
                     stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
                 }
                 catch (Exception _ex)
