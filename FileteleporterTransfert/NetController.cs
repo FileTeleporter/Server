@@ -13,7 +13,8 @@ namespace FileteleporterTransfert
         {
             testCon,
             discoverReturn,
-            transferAck
+            transferAck,
+            infos
         }
 
         public enum ActionOnTransferer
@@ -23,6 +24,7 @@ namespace FileteleporterTransfert
             connect,
             disconnect,
             transfer,
+            infos
         }
 
 

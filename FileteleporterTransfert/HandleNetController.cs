@@ -26,7 +26,8 @@ namespace FileteleporterTransfert
                 { NetController.ActionOnTransferer.discover,  Discover},
                 { NetController.ActionOnTransferer.connect,  ConnectToSrv},
                 { NetController.ActionOnTransferer.disconnect, Disconnect },
-                { NetController.ActionOnTransferer.transfer, Transfer }
+                { NetController.ActionOnTransferer.transfer, Transfer },
+                { NetController.ActionOnTransferer.infos, ShowInfos },
             };
         }
 
@@ -73,10 +74,12 @@ namespace FileteleporterTransfert
                 EZConsole.WriteLine("handle", $"Connect to {parameters[0]}");
                 client.Client connectClient = new client.Client(parameters[0], Environment.MachineName);
                 client.Client.instance.ConnectToServer();
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Client connected to {client.Client.instance.ip} as {Environment.MachineName}" });
             }
             else
             {
-                EZConsole.WriteLine("handle", $"Client already connected");
+                EZConsole.WriteLine("handle", $"Client could not connect to the new server");
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Client could not connect to the new server" });
             }
         }
 
@@ -86,6 +89,7 @@ namespace FileteleporterTransfert
             {
                 EZConsole.WriteLine("handle", $"Disconnect from {client.Client.instance.ip}");
                 client.Client.instance.Disconnect();
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Client disconnected" });
             }
         }
 
@@ -124,6 +128,18 @@ namespace FileteleporterTransfert
                     client.ClientSend.AskForSendFile(Path.GetFileName(parameters[0]), new System.IO.FileInfo(parameters[0]).Length);
                     break;
             }
+        }
+
+        public void ShowInfos(string[] parameters)
+        {
+            string message = "";
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                message += parameters[i];
+                if (i < parameters.Length - 1)
+                    message += Environment.NewLine;
+            }
+            EZConsole.WriteLine("infos", message);
         }
     }
 }

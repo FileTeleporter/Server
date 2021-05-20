@@ -316,6 +316,9 @@ namespace client
                     udp.socket.Close();
                 instance = null;
 
+                tcp = null;
+                udp = null;
+
                 EZConsole.WriteLine("Client", "Disconnected from server.");
             }
         }

@@ -25,7 +25,8 @@ namespace FileTeleporterNetController
             {
                 { NetController.ActionOnController.testCon, TestConnection},
                 { NetController.ActionOnController.discoverReturn, DiscoverReturn },
-                { NetController.ActionOnController.transferAck, TransferAcknowledgement }
+                { NetController.ActionOnController.transferAck, TransferAcknowledgement },
+                { NetController.ActionOnController.infos, ShowInfos },
             };
         }
 
@@ -69,6 +70,18 @@ namespace FileTeleporterNetController
         {
             EZConsole.WriteLine("handle", $"Would you like to download {parameters[0]} with a size of {long.Parse(parameters[1]) / 1048576}Mio from {parameters[2]}" + Environment.NewLine +
                                 "transfer validate or transfer deny");
+        }
+
+        public void ShowInfos(string[] parameters)
+        {
+            string message = "";
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                message += parameters[i];
+                if (i < parameters.Length - 1)
+                    message += Environment.NewLine;
+            }
+            EZConsole.WriteLine("infos", message);
         }
     }
 }

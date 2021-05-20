@@ -24,6 +24,7 @@ namespace FileTeleporterNetController
             EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Blue, ConsoleColor.White);
             EZConsole.AddHeader("handle", "[HANDLENETCONTROLLER]", ConsoleColor.Magenta, ConsoleColor.White);
             EZConsole.AddHeader("error", "[ERROR]", ConsoleColor.Red, ConsoleColor.Red);
+            EZConsole.AddHeader("infos", "[INFOS]", ConsoleColor.Blue, ConsoleColor.White);
 
 
             NetController netController = new NetController("127.0.0.1", 56235, 56236);
@@ -44,23 +45,21 @@ namespace FileTeleporterNetController
                 {
                     case string a when a.StartsWith("test connection"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.testCon);
-                        EZConsole.WriteLine("cmd", "Testing connection");
+                        EZConsole.WriteLine("cmd", "Testing connection...");
                         enterCommand = null;
                         break;
 
                     case string a when a.StartsWith("discover"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.discover);
-                        EZConsole.WriteLine("cmd", "Discovering the network");
+                        EZConsole.WriteLine("cmd", "Discovering the network...");
                         break;
 
                     case string a when a.StartsWith("connect"):
                         string param = a.Split(' ')[1];
                         NetController.instance.SendData(NetController.ActionOnTransferer.connect, new string[] { param });
-                        EZConsole.WriteLine("cmd", "connecting to a server");
                         break;
                     case string a when a.StartsWith("disconnect"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.disconnect);
-                        EZConsole.WriteLine("cmd", "disconnect");
                         break;
 
                     case string a when a.StartsWith("transfer"):

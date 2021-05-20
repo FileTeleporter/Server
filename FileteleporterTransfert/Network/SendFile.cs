@@ -53,18 +53,26 @@ namespace FileteleporterTransfert.Network
 
         private async void SendAsync(IAsyncResult asyncResult)
         {
-            long timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+            long timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
             await Task.Run(() => SendPart(() =>
             {
-                long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+                long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
                 long timeElapsed = timeEnd - timeStart;
                 if (timeElapsed == 0)
                     timeElapsed = 1;
-                EZConsole.WriteLine("SendFile", $"\n" +
-                        $"----------------------------------------\n" +
-                        $"{fileLength / 1048576} Mio transmited in {timeElapsed} sec\n" +
-                        $"With a speed of {(fileLength / timeElapsed) / 1048576} Mio/s\n" +
-                        $"----------------------------------------");
+                //EZConsole.WriteLine("SendFile", $"\n" +
+                //        $"----------------------------------------\n" +
+                //        $"{fileLength / 1048576} Mio transmited in {(float)timeElapsed / 1000} sec\n" +
+                //        $"With a speed of {(float)(fileLength / (timeElapsed / 1000)) / 1048576} Mio/s\n" +
+                //        $"----------------------------------------");
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
+                {
+                    $" - File length : {fileLength / 1048576} Mio",
+                    $" - Transmit time : {(float)timeElapsed / 1000} sec",
+                    $" - Transmit time : {(float)(fileLength / (timeElapsed/1000)) / 1048576} Mio/s",
+
+                });
+
                 tcp.Disconnect();
                 tcp = null;
                 GC.Collect();

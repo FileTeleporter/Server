@@ -23,6 +23,7 @@ namespace FileteleporterTransfert
             EZConsole.AddHeader("error", "[ERROR]", ConsoleColor.Red, ConsoleColor.Red);
             EZConsole.AddHeader("Discovery", "[DISCOVERY]", ConsoleColor.Yellow, ConsoleColor.White);
             EZConsole.AddHeader("SendFile", "[SENDFILE]", ConsoleColor.DarkCyan, ConsoleColor.Cyan);
+            EZConsole.AddHeader("infos", "[INFOS]", ConsoleColor.Blue, ConsoleColor.White);
 
             NetController netController = new NetController("127.0.0.1", 56236, 56235);
 

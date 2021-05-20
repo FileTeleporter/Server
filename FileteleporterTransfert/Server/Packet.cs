@@ -9,7 +9,7 @@ namespace server
     public enum ServerPackets
     {
         welcome = 1,
-        validateDenyTransfer
+        validateDenyTransfer,
     }
 
     /// <summary>Sent from client to server.</summary>
