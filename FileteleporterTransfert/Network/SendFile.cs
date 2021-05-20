@@ -69,7 +69,7 @@ namespace FileteleporterTransfert.Network
                 {
                     $" - File length : {fileLength / 1048576} Mio",
                     $" - Transmit time : {(float)timeElapsed / 1000} sec",
-                    $" - Transmit time : {(float)(fileLength / (timeElapsed/1000)) / 1048576} Mio/s",
+                    $" - Transmit speed : {(float)(fileLength / (timeElapsed/1000)) / 1048576} Mio/s",
 
                 });
 
