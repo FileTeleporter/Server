@@ -54,41 +54,70 @@ namespace FileteleporterTransfert.Network
         private async void SendAsync(IAsyncResult asyncResult)
         {
             long timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            await Task.Run(() => SendPart());
-            long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            long timeElapsed = timeEnd - timeStart;
-            EZConsole.WriteLine("SendFile", $"\n" +
-                    $"----------------------------------------\n" +
-                    $"{fileLength / 1048576} Mio transmited in {timeElapsed} sec\n" +
-                    $"With a speed of {(fileLength / timeElapsed) / 1048576} Mio/s\n" +
-                    $"----------------------------------------");
-            tcp.Disconnect();
-            tcp = null;
-            GC.Collect();
+            await Task.Run(() => SendPart(() =>
+            {
+                long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+                long timeElapsed = timeEnd - timeStart;
+                if (timeElapsed == 0)
+                    timeElapsed = 1;
+                EZConsole.WriteLine("SendFile", $"\n" +
+                        $"----------------------------------------\n" +
+                        $"{fileLength / 1048576} Mio transmited in {timeElapsed} sec\n" +
+                        $"With a speed of {(fileLength / timeElapsed) / 1048576} Mio/s\n" +
+                        $"----------------------------------------");
+                tcp.Disconnect();
+                tcp = null;
+                GC.Collect();
+            }));
         }
 
-        private void SendPart()
+        private async void SendPart(Action callBack)
         {
-            byte[] fileSmall = new byte[bufferSize];
+            byte[] fileSmall;
             FileStream file = File.OpenRead(filePath);
             fileLength = file.Length;
-            while(!finished)
+
+            int lengthToRead = 0;
+            if (fileLength < bufferSize)
+                lengthToRead = (int)fileLength;
+            else
+                lengthToRead = bufferSize;
+
+            Task<byte[]> readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
+            readData.Start();
+            fileSmall = await readData;
+
+            while (!finished)
             {
                 if(fileLength < filePos + bufferSize)
                 {
                     if(fileLength == filePos)
                     {
                         finished = true;
+                        callBack?.Invoke();
                         return;
-                    }else
+                    }
+                    else
                     {
-                        fileSmall = new byte[fileLength - filePos];
+                        lengthToRead = (int)fileLength - filePos;
                     }
                 }
-                file.Read(fileSmall, 0, fileSmall.Length);
-                filePos += fileSmall.Length;
+                filePos += lengthToRead;
+
+                readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
+                readData.Start();
+
                 tcp.SendDataSync(fileSmall);
+
+                fileSmall = await readData;
             }
+        }
+
+        private byte[] ReadData(FileStream stream, int lengthToRead)
+        {
+            byte[] toRead = new byte[lengthToRead];
+            stream.Read(toRead, 0, lengthToRead);
+            return toRead;
         }
 
         public class TCPFileSend

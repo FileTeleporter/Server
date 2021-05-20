@@ -85,9 +85,9 @@ namespace server
                     Array.Copy(receiveBuffer, _data, _byteLength);
 
                     string fileName = "result2.dat";
-                    using(FileStream file = File.Create(fileName))
+                    using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Append)))
                     {
-                        file.WriteAsync(_data);
+                        writer.Write(_data);
                     }
                     stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
                 }

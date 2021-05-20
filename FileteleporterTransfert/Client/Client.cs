@@ -13,7 +13,7 @@ namespace client
         public static int dataBufferSize = 1052672;
 
         public string ip = "127.0.0.1";
-        public int port = /*26950*/56237;
+        public int port = 26950;
         public string name;
         public int myId = 0;
         public TCP tcp;

@@ -33,7 +33,7 @@ namespace FileteleporterTransfert
             Thread mainThread = new Thread(new ThreadStart(MainThread));
             mainThread.Start();
 
-            server.Server.Start(50, /*26950*/56237);
+            server.Server.Start(50, 26950);
 
             Network.NetDiscovery.Discover();
 
