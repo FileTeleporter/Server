@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System;
 using FileteleporterTransfert.Tools;
+using FileteleporterTransfert;
 
 namespace client
 {
@@ -319,7 +320,10 @@ namespace client
                 tcp = null;
                 udp = null;
 
+                instance = null;
+
                 EZConsole.WriteLine("Client", "Disconnected from server.");
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Client disconnected" });
             }
         }
     }

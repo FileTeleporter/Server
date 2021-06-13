@@ -66,21 +66,16 @@ namespace FileteleporterTransfert.Network
                 long timeElapsed = timeEnd - timeStart;
                 if (timeElapsed == 0)
                     timeElapsed = 1;
-                //EZConsole.WriteLine("SendFile", $"\n" +
-                //        $"----------------------------------------\n" +
-                //        $"{fileLength / 1048576} Mio transmited in {(float)timeElapsed / 1000} sec\n" +
-                //        $"With a speed of {(float)(fileLength / (timeElapsed / 1000)) / 1048576} Mio/s\n" +
-                //        $"----------------------------------------");
 
-                //NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
-                //{
-                //    $" - Raw length : {fileLength} B",
-                //    $" - File length : {fileLength / 1048576} MiB",
-                //    $" - Transmit time : {(float)timeElapsed / 1000} sec",
-                //    $" - Transmit speed : {(float)(fileLength / (timeElapsed/1000)) / 1048576} MiB/s",
+                NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
+                {
+                    $" - Raw length : {fileLength} B",
+                    $" - File length : {fileLength / 1048576} MiB",
+                    $" - Transmit time : {(float)timeElapsed / 1000} sec",
+                    $" - Transmit speed : {(float)(fileLength / ((float)timeElapsed/1000)) / 1048576} MiB/s",
 
-                //});
-
+                });
+                client.Client.instance.Disconnect();
                 tcp.Disconnect();
                 tcp = null;
                 GC.Collect();
@@ -217,7 +212,6 @@ namespace FileteleporterTransfert.Network
             // pls only use this type of file stream, if use File.Open perfs will suffer
             private FileStream fileStream;
             Task t = null;
-            long test = 0;
             /// <summary>Reads incoming data from the stream.</summary>
             private async void ReceiveCallback(IAsyncResult _result)
             {
@@ -239,9 +233,6 @@ namespace FileteleporterTransfert.Network
                     GC.Collect();
                     _data = new byte[_byteLength];
                     Array.Copy(receiveBuffer, _data, _byteLength);
-
-                    test += _byteLength;
-                    Console.WriteLine(test);
 
                     t = new Task(() =>
                     {

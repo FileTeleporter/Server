@@ -70,11 +70,8 @@ namespace server
 
         private static void TCPSendFileConnectCallback(IAsyncResult _result)
         {
-            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
-            tcpListener.BeginAcceptTcpClient(TCPSendFileConnectCallback, null);
-
-            //tcpFileSend = new server.Client.TCPFileSend();
-            //tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
+            TcpClient _client = tcpSendFileListener.EndAcceptTcpClient(_result);
+            tcpSendFileListener.BeginAcceptTcpClient(TCPSendFileConnectCallback, null);
 
             for (int i = 1; i <= MaxInboundTransfers; i++)
             {

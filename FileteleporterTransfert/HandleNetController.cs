@@ -89,7 +89,6 @@ namespace FileteleporterTransfert
             {
                 EZConsole.WriteLine("handle", $"Disconnect from {client.Client.instance.ip}");
                 client.Client.instance.Disconnect();
-                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Client disconnected" });
             }
         }
 
