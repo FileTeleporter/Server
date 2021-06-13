@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Network;
@@ -34,29 +37,9 @@ namespace FileteleporterTransfert
             Thread mainThread = new Thread(new ThreadStart(MainThread));
             mainThread.Start();
 
-            server.Server.Start(50, 26950);
+            server.Server.Start(50, 50, 26950);
 
             Network.NetDiscovery.Discover();
-
-            // start listening for a file transfer
-            tcpListener = new TcpListener(IPAddress.Any, 60589);
-            tcpListener.Start();
-            tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
-        }
-
-        // multiple transfer at the same times might corrupt files need to check the code below
-        private static server.Client.TCPFileSend tcpFileSend;
-        private static void TCPConnectCallback(IAsyncResult _result)
-        {
-            Task.Run(() =>
-            {
-                TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
-                tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
-                EZConsole.WriteLine("SendFile", $"Incoming connection from {_client.Client.RemoteEndPoint}...");
-
-                tcpFileSend = new server.Client.TCPFileSend();
-                tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
-            });
         }
 
         private static void MainThread()

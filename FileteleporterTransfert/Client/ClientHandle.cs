@@ -29,7 +29,7 @@ namespace client
             if(validate)
             {
                 SendFile sendFile = new SendFile(NetController.instance.handleNetController.pendingTransfer[0], client.Client.instance.ip);
-                sendFile.SendPartAsync(Constants.BUFFER_FOR_FILE);
+                sendFile.SendPartAsync();
             }
             NetController.instance.handleNetController.pendingTransfer.RemoveAt(0);
         }

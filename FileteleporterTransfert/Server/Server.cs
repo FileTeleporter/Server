@@ -10,20 +10,24 @@ namespace server
     class Server
     {
         public static int MaxPlayers { get; private set; }
+        public static int MaxInboundTransfers { get; private set; }
         public static int Port { get; private set; }
         public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public static Dictionary<int, FileteleporterTransfert.Network.SendFile> inboundTransfers = new Dictionary<int, FileteleporterTransfert.Network.SendFile>();
         public delegate void PacketHandler(int _fromClient, Packet _packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
 
         private static TcpListener tcpListener;
+        private static TcpListener tcpSendFileListener;
         private static UdpClient udpListener;
 
         /// <summary>Starts the server.</summary>
         /// <param name="_maxPlayers">The maximum players that can be connected simultaneously.</param>
         /// <param name="_port">The port to start the server on.</param>
-        public static void Start(int _maxPlayers, int _port)
+        public static void Start(int _maxPlayers, int _maxTransfers, int _port)
         {
             MaxPlayers = _maxPlayers;
+            MaxInboundTransfers = _maxTransfers;
             Port = _port;
 
             EZConsole.WriteLine("Server", "Starting server...");
@@ -32,6 +36,12 @@ namespace server
             tcpListener = new TcpListener(IPAddress.Any, Port);
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(TCPConnectCallback, null);
+
+
+            // connect to inbound transferer
+            tcpSendFileListener = new TcpListener(IPAddress.Any, 60589);
+            tcpSendFileListener.Start();
+            tcpSendFileListener.BeginAcceptTcpClient(TCPSendFileConnectCallback, null);
 
             udpListener = new UdpClient(Port);
             udpListener.BeginReceive(UDPReceiveCallback, null);
@@ -56,6 +66,25 @@ namespace server
             }
 
             EZConsole.WriteLine("Server", $"{_client.Client.RemoteEndPoint} failed to connect: Server full!");
+        }
+
+        private static void TCPSendFileConnectCallback(IAsyncResult _result)
+        {
+            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
+            tcpListener.BeginAcceptTcpClient(TCPSendFileConnectCallback, null);
+            EZConsole.WriteLine("SendFile", $"Inbound transfer from {_client.Client.RemoteEndPoint}...");
+
+            //tcpFileSend = new server.Client.TCPFileSend();
+            //tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
+
+            for (int i = 1; i <= MaxInboundTransfers; i++)
+            {
+                if (inboundTransfers[i].Tcp == null)
+                {
+                    inboundTransfers[i] = new FileteleporterTransfert.Network.SendFile(_client, true);
+                    return;
+                }
+            }
         }
 
         /// <summary>Receives incoming UDP data.</summary>
@@ -125,6 +154,11 @@ namespace server
             for (int i = 1; i <= MaxPlayers; i++)
             {
                 clients.Add(i, new Client(i));
+            }
+
+            for (int i = 1; i <= MaxInboundTransfers; i++)
+            {
+                inboundTransfers.Add(i, new FileteleporterTransfert.Network.SendFile());
             }
 
             packetHandlers = new Dictionary<int, PacketHandler>()

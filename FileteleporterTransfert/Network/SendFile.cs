@@ -18,9 +18,11 @@ namespace FileteleporterTransfert.Network
         int filePos;
         public bool finished;
         private string ip;
-        private int bufferSize;
         private TCPFileSend tcp;
+        internal TCPFileSend Tcp { get => tcp;}
 
+
+        public SendFile() { }
 
         public SendFile(string filePath, string ip)
         {
@@ -30,9 +32,19 @@ namespace FileteleporterTransfert.Network
             finished = false;
         }
 
-        public void SendPartAsync(int nbByte)
+        public SendFile(TcpClient client, bool connect)
         {
-            bufferSize = nbByte;
+            filePos = 0;
+            finished = false;
+            if (connect)
+            {
+                tcp = new TCPFileSend();
+                tcp.Connect(client);
+            }
+        }
+
+        public void SendPartAsync()
+        {
             Connect();
         }
 
@@ -43,7 +55,7 @@ namespace FileteleporterTransfert.Network
         private void SendFileTestPrepare(string ip, Action canReceiveCallBack)
         {
             tcp = new TCPFileSend();
-            tcp.Connect(Constants.BUFFER_FOR_FILE, ip, 60589, canReceiveCallBack, this);
+            tcp.Connect(ip, canReceiveCallBack, this);
         }
 
         private void SendAsync()
@@ -65,13 +77,15 @@ namespace FileteleporterTransfert.Network
                 //        $"{fileLength / 1048576} Mio transmited in {(float)timeElapsed / 1000} sec\n" +
                 //        $"With a speed of {(float)(fileLength / (timeElapsed / 1000)) / 1048576} Mio/s\n" +
                 //        $"----------------------------------------");
-                NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
-                {
-                    $" - File length : {fileLength / 1048576} Mio",
-                    $" - Transmit time : {(float)timeElapsed / 1000} sec",
-                    $" - Transmit speed : {(float)(fileLength / (timeElapsed/1000)) / 1048576} Mio/s",
 
-                });
+                //NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
+                //{
+                //    $" - Raw length : {fileLength} B",
+                //    $" - File length : {fileLength / 1048576} MiB",
+                //    $" - Transmit time : {(float)timeElapsed / 1000} sec",
+                //    $" - Transmit speed : {(float)(fileLength / (timeElapsed/1000)) / 1048576} MiB/s",
+
+                //});
 
                 tcp.Disconnect();
                 tcp = null;
@@ -86,31 +100,37 @@ namespace FileteleporterTransfert.Network
             fileLength = file.Length;
 
             int lengthToRead = 0;
-            if (fileLength < bufferSize)
+            if (fileLength < Constants.BUFFER_FOR_FILE)
                 lengthToRead = (int)fileLength;
             else
-                lengthToRead = bufferSize;
+                lengthToRead = Constants.BUFFER_FOR_FILE;
 
             Task<byte[]> readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
             readData.Start();
             fileSmall = await readData;
+            int length = 0;
+            //int nbCalls = 0;
 
             while (!finished)
             {
-                if(fileLength < filePos + bufferSize)
+                if(fileLength < filePos + Constants.BUFFER_FOR_FILE)
                 {
                     if(fileLength == filePos)
                     {
                         finished = true;
                         callBack?.Invoke();
+                        Console.WriteLine("final sent length:" + length);
                         return;
                     }
                     else
                     {
+                        Console.WriteLine("pre final length:" + length);
                         lengthToRead = (int)fileLength - filePos;
+                        Console.WriteLine("not buffer length:" + lengthToRead);
                     }
                 }
                 filePos += lengthToRead;
+                length += lengthToRead;
 
                 readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
                 readData.Start();
@@ -135,15 +155,14 @@ namespace FileteleporterTransfert.Network
 
             private NetworkStream stream;
             private byte[] receiveBuffer;
-            private int dataBufferSize;
+            private int dataBufferSize = Constants.BUFFER_FOR_FILE;
 
             private Action canReceiveCallBack;
 
             /// <summary>Attempts to connect to the server via TCP.</summary>
-            public void Connect(int dataBufferSize, string ip, int port, Action canReceiveCallBack, SendFile sendFile)
+            public void Connect(string ip, Action canReceiveCallBack, SendFile sendFile)
             {
                 this.canReceiveCallBack = canReceiveCallBack;
-                this.dataBufferSize = dataBufferSize;
                 this.sendFile = sendFile;
                 socket = new TcpClient
                 {
@@ -153,7 +172,20 @@ namespace FileteleporterTransfert.Network
 
 
                 receiveBuffer = new byte[dataBufferSize];
-                socket.BeginConnect(ip, port, ConnectCallback, socket);
+                socket.BeginConnect(ip, Constants.SEND_FILE_PORT, ConnectCallback, socket);
+            }
+
+            public void Connect(TcpClient _socket)
+            {
+                socket = _socket;
+                socket.ReceiveBufferSize = dataBufferSize;
+                socket.SendBufferSize = dataBufferSize;
+
+                stream = socket.GetStream();
+
+                receiveBuffer = new byte[dataBufferSize];
+
+                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
             }
 
             /// <summary>Initializes the newly connected client's TCP-related info.</summary>
@@ -172,23 +204,6 @@ namespace FileteleporterTransfert.Network
                 canReceiveCallBack?.Invoke();
             }
 
-            /// <summary>Sends data to the client via TCP.</summary>
-            /// <param name="_packet">The packet to send.</param>
-            public void SendData(byte[] file)
-            {
-                try
-                {
-                    if (socket != null)
-                    {
-                        stream.BeginWrite(file, 0, file.Length, sendFile.SendAsync, null); // Send data to server
-                    }
-                }
-                catch (Exception _ex)
-                {
-                    Console.WriteLine($"Error sending data to server via TCP: {_ex}");
-                }
-            }
-
             public void SendDataSync(byte[] file)
             {
                 try
@@ -205,24 +220,45 @@ namespace FileteleporterTransfert.Network
             }
 
             /// <summary>Reads incoming data from the stream.</summary>
-            private void ReceiveCallback(IAsyncResult _result)
+            private byte[] _data;
+            // pls only use this type of file stream, if use File.Open perfs will suffer
+            private FileStream fileStream;
+            Task t = null;
+            long test = 0;
+            /// <summary>Reads incoming data from the stream.</summary>
+            private async void ReceiveCallback(IAsyncResult _result)
             {
+                if(fileStream == null)
+                    fileStream = File.OpenWrite("result1.dat");
+                if (t != null)
+                {
+                    await t;
+                }
                 try
                 {
                     int _byteLength = stream.EndRead(_result);
                     if (_byteLength <= 0)
                     {
-                        //instance.Disconnect();
+                        Disconnect();
                         return;
                     }
-
-                    byte[] _data = new byte[_byteLength];
+                    GC.Collect();
+                    _data = new byte[_byteLength];
                     Array.Copy(receiveBuffer, _data, _byteLength);
-                    //do something if data is recieved
+
+                    test += _byteLength;
+                    Console.WriteLine(test);
+
+                    t = new Task(() =>
+                    {
+                        fileStream.Write(_data, 0, _data.Length);
+                    });
+                    t.Start();
                     stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
                 }
-                catch
+                catch (Exception _ex)
                 {
+                    Console.WriteLine($"Error receiving TCP data: {_ex}");
                     Disconnect();
                 }
             }
@@ -230,11 +266,13 @@ namespace FileteleporterTransfert.Network
 
             public void Disconnect()
             {
-                //instance.Disconnect();
-
                 stream = null;
                 receiveBuffer = null;
                 socket = null;
+                sendFile.tcp = null;
+                if(fileStream != null)
+                    fileStream.Close();
+                fileStream = null;
             }
         }
     }

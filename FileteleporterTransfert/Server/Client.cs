@@ -12,7 +12,7 @@ namespace server
 {
     class Client
     {
-        public static int dataBufferSize = 1052672;
+        public static int dataBufferSize = 4096;
 
         public int id;
         public string name;
@@ -24,95 +24,6 @@ namespace server
             id = _clientId;
             tcp = new TCP(id);
             udp = new UDP(id);
-        }
-
-        public class TCPFileSend
-        {
-            public TcpClient socket;
-            private NetworkStream stream;
-            private Packet receivedData;
-            private byte[] receiveBuffer;
-            private int dataBufferSize;
-
-            /// <summary>Initializes the newly connected client's TCP-related info.</summary>
-            /// <param name="_socket">The TcpClient instance of the newly connected client.</param>
-            public void Connect(TcpClient _socket, int dataBufferSize)
-            {
-                this.dataBufferSize = dataBufferSize;
-                socket = _socket;
-                socket.ReceiveBufferSize = dataBufferSize;
-                socket.SendBufferSize = dataBufferSize;
-
-                stream = socket.GetStream();
-
-                receivedData = new Packet();
-                receiveBuffer = new byte[dataBufferSize];
-
-                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
-            }
-
-            /// <summary>Sends data to the client via TCP.</summary>
-            /// <param name="_packet">The packet to send.</param>
-            public void SendData(Packet _packet)
-            {
-                try
-                {
-                    if (socket != null)
-                    {
-                        stream.BeginWrite(_packet.ToArray(), 0, _packet.Length(), null, null); // Send data to appropriate client
-                    }
-                }
-                catch (Exception _ex)
-                {
-                    Console.WriteLine($"Error sending data");
-                }
-            }
-
-            private byte[] _data;
-            // pls only use this type of file stream, if use File.Open perfs will suffer
-            private FileStream fileStream = File.OpenWrite("result2.dat");
-            Task t = null;
-            /// <summary>Reads incoming data from the stream.</summary>
-            private async void ReceiveCallback(IAsyncResult _result)
-            {
-                if(t != null)
-                {
-                    await t;
-                }
-                try
-                {
-                    int _byteLength = stream.EndRead(_result);
-                    if (_byteLength <= 0)
-                    {
-                        Disconnect();
-                        return;
-                    }
-                    GC.Collect();
-                    _data = new byte[_byteLength];
-                    Array.Copy(receiveBuffer, _data, _byteLength);
-
-                    t = new Task(() =>
-                    {
-                        fileStream.Write(_data, 0, _data.Length);
-                    });
-                    t.Start();
-                    stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
-                }
-                catch (Exception _ex)
-                {
-                    Console.WriteLine($"Error receiving TCP data: {_ex}");
-                    Disconnect();
-                }
-            }
-            /// <summary>Closes and cleans up the TCP connection.</summary>
-            public void Disconnect()
-            {
-                socket.Close();
-                stream = null;
-                receivedData = null;
-                receiveBuffer = null;
-                socket = null;
-            }
         }
 
         public class TCP

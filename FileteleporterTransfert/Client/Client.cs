@@ -10,7 +10,7 @@ namespace client
     public class Client
     {
         public static Client instance;
-        public static int dataBufferSize = 1052672;
+        public static int dataBufferSize = 4096;
 
         public string ip = "127.0.0.1";
         public int port = 26950;
