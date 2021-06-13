@@ -15,7 +15,6 @@ namespace FileteleporterTransfert.Network
     {
         string filePath;
         private long fileLength;
-        int filePos;
         public bool finished;
         private string ip;
         private TCPFileSend tcp;
@@ -28,13 +27,11 @@ namespace FileteleporterTransfert.Network
         {
             this.filePath = filePath;
             this.ip = ip;
-            filePos = 0;
             finished = false;
         }
 
         public SendFile(TcpClient client, bool connect)
         {
-            filePos = 0;
             finished = false;
             if (connect)
             {
@@ -108,29 +105,23 @@ namespace FileteleporterTransfert.Network
             Task<byte[]> readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
             readData.Start();
             fileSmall = await readData;
-            int length = 0;
-            //int nbCalls = 0;
 
             while (!finished)
             {
-                if(fileLength < filePos + Constants.BUFFER_FOR_FILE)
+                if(fileLength < file.Position + Constants.BUFFER_FOR_FILE)
                 {
-                    if(fileLength == filePos)
+                    if(fileLength == file.Position)
                     {
+                        tcp.SendDataSync(fileSmall);
                         finished = true;
                         callBack?.Invoke();
-                        Console.WriteLine("final sent length:" + length);
                         return;
                     }
                     else
                     {
-                        Console.WriteLine("pre final length:" + length);
-                        lengthToRead = (int)fileLength - filePos;
-                        Console.WriteLine("not buffer length:" + lengthToRead);
+                        lengthToRead = Convert.ToInt32(fileLength - file.Position);
                     }
                 }
-                filePos += lengthToRead;
-                length += lengthToRead;
 
                 readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
                 readData.Start();
@@ -204,6 +195,7 @@ namespace FileteleporterTransfert.Network
                 canReceiveCallBack?.Invoke();
             }
 
+            int yaaa = 0;
             public void SendDataSync(byte[] file)
             {
                 try
@@ -211,6 +203,8 @@ namespace FileteleporterTransfert.Network
                     if (socket != null)
                     {
                         stream.Write(file, 0, file.Length); // Send data to server
+                        yaaa += file.Length;
+                        Console.WriteLine(yaaa);
                     }
                 }
                 catch (Exception _ex)
@@ -247,7 +241,7 @@ namespace FileteleporterTransfert.Network
                     Array.Copy(receiveBuffer, _data, _byteLength);
 
                     test += _byteLength;
-                    Console.WriteLine(test);
+                    //Console.WriteLine(test);
 
                     t = new Task(() =>
                     {
