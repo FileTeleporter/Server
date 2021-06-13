@@ -14,7 +14,6 @@ namespace FileteleporterTransfert
     class Program
     {
         private static bool isRunning = false;
-        private static TcpListener tcpListener;
 
         static void Main(string[] args)
         {

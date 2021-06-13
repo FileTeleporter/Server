@@ -30,14 +30,11 @@ namespace FileteleporterTransfert.Network
             finished = false;
         }
 
-        public SendFile(TcpClient client, bool connect)
+        public SendFile(TcpClient client, bool shouldWrite)
         {
             finished = false;
-            if (connect)
-            {
-                tcp = new TCPFileSend();
-                tcp.Connect(client);
-            }
+            tcp = new TCPFileSend();
+            tcp.Connect(client, shouldWrite, this);
         }
 
         public void SendPartAsync()
@@ -148,6 +145,8 @@ namespace FileteleporterTransfert.Network
             private byte[] receiveBuffer;
             private int dataBufferSize = Constants.BUFFER_FOR_FILE;
 
+            private bool shouldWrite = false;
+
             private Action canReceiveCallBack;
 
             /// <summary>Attempts to connect to the server via TCP.</summary>
@@ -166,8 +165,11 @@ namespace FileteleporterTransfert.Network
                 socket.BeginConnect(ip, Constants.SEND_FILE_PORT, ConnectCallback, socket);
             }
 
-            public void Connect(TcpClient _socket)
+            public void Connect(TcpClient _socket, bool shouldWrite, SendFile sendFile)
             {
+                this.shouldWrite = shouldWrite;
+                this.sendFile = sendFile;
+
                 socket = _socket;
                 socket.ReceiveBufferSize = dataBufferSize;
                 socket.SendBufferSize = dataBufferSize;
@@ -195,7 +197,6 @@ namespace FileteleporterTransfert.Network
                 canReceiveCallBack?.Invoke();
             }
 
-            int yaaa = 0;
             public void SendDataSync(byte[] file)
             {
                 try
@@ -203,8 +204,6 @@ namespace FileteleporterTransfert.Network
                     if (socket != null)
                     {
                         stream.Write(file, 0, file.Length); // Send data to server
-                        yaaa += file.Length;
-                        Console.WriteLine(yaaa);
                     }
                 }
                 catch (Exception _ex)
@@ -222,7 +221,7 @@ namespace FileteleporterTransfert.Network
             /// <summary>Reads incoming data from the stream.</summary>
             private async void ReceiveCallback(IAsyncResult _result)
             {
-                if(fileStream == null)
+                if(fileStream == null && shouldWrite)
                     fileStream = File.OpenWrite("result1.dat");
                 if (t != null)
                 {
@@ -234,6 +233,7 @@ namespace FileteleporterTransfert.Network
                     if (_byteLength <= 0)
                     {
                         Disconnect();
+                        Purge();
                         return;
                     }
                     GC.Collect();
@@ -241,7 +241,7 @@ namespace FileteleporterTransfert.Network
                     Array.Copy(receiveBuffer, _data, _byteLength);
 
                     test += _byteLength;
-                    //Console.WriteLine(test);
+                    Console.WriteLine(test);
 
                     t = new Task(() =>
                     {
@@ -252,7 +252,7 @@ namespace FileteleporterTransfert.Network
                 }
                 catch (Exception _ex)
                 {
-                    Console.WriteLine($"Error receiving TCP data: {_ex}");
+                    //Console.WriteLine($"Error receiving TCP data: {_ex}");
                     Disconnect();
                 }
             }
@@ -260,13 +260,21 @@ namespace FileteleporterTransfert.Network
 
             public void Disconnect()
             {
-                stream = null;
-                receiveBuffer = null;
-                socket = null;
-                sendFile.tcp = null;
-                if(fileStream != null)
+                if (fileStream != null)
                     fileStream.Close();
                 fileStream = null;
+                if(socket != null)
+                {
+                    socket.Close();
+                    socket = null;
+                }
+            }
+
+            public void Purge()
+            {
+                stream = null;
+                receiveBuffer = null;
+                sendFile.tcp = null;
             }
         }
     }

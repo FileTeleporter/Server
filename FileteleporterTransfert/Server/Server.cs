@@ -72,7 +72,6 @@ namespace server
         {
             TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
             tcpListener.BeginAcceptTcpClient(TCPSendFileConnectCallback, null);
-            EZConsole.WriteLine("SendFile", $"Inbound transfer from {_client.Client.RemoteEndPoint}...");
 
             //tcpFileSend = new server.Client.TCPFileSend();
             //tcpFileSend.Connect(_client, Constants.BUFFER_FOR_FILE);
@@ -82,6 +81,7 @@ namespace server
                 if (inboundTransfers[i].Tcp == null)
                 {
                     inboundTransfers[i] = new FileteleporterTransfert.Network.SendFile(_client, true);
+                    EZConsole.WriteLine("SendFile", $"Inbound transfer from {_client.Client.RemoteEndPoint} at place {i}...");
                     return;
                 }
             }
