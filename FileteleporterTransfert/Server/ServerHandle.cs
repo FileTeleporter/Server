@@ -38,6 +38,7 @@ namespace server
                     null,
                     new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
                     new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                    fileSize,
                     0,
                     null,
                     FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised);
@@ -47,6 +48,7 @@ namespace server
                         null,
                         new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
                         new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                        fileSize,
                         0,
                         null,
                         FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised));

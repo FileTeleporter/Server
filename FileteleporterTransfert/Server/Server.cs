@@ -79,10 +79,12 @@ namespace server
             {
                 if (inboundTransfers[i].Tcp == null)
                 {
-                    inboundTransfers[i] = new FileteleporterTransfert.Network.SendFile(_client, true);
 
                     FileteleporterTransfert.Network.SendFile.Transfer transfer = FileteleporterTransfert.Network.SendFile.inboundTransfers[((IPEndPoint)_client.Client.RemoteEndPoint).Address];
-                    transfer.sendfile = inboundTransfers[i];
+                    FileteleporterTransfert.Network.SendFile sendFile = new FileteleporterTransfert.Network.SendFile(_client, true, transfer);
+                    transfer.sendfile = sendFile;
+
+                    inboundTransfers[i] = sendFile;
 
                     EZConsole.WriteLine("SendFile", $"Inbound transfer from {transfer.from.name} ({_client.Client.RemoteEndPoint}) at place {i}");
                     return;

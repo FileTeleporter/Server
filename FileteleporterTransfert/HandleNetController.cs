@@ -95,11 +95,10 @@ namespace FileteleporterTransfert
             }
         }
 
-        // store the path for the transfer
-        public List<string> pendingTransfer = new List<string>();
-
         public void Transfer(string[] parameters)
         {
+            if (parameters.Length < 0)
+                return;
             switch(parameters[0])
             {
                 // usage : transfer validate <ip> <dest. directory>
@@ -158,7 +157,7 @@ namespace FileteleporterTransfert
                         if (SendFile.inboundTransfers.ContainsKey(iPAddress))
                         {
                             transfer = SendFile.inboundTransfers[iPAddress];
-                            transfer.status = SendFile.Transfer.Status.Started;
+                            transfer.status = SendFile.Transfer.Status.Finished;
                         }
                         else
                         {
@@ -182,7 +181,7 @@ namespace FileteleporterTransfert
                         NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list" });
                         return;
                     }
-                    if (SendFile.inboundTransfers.Count > 0)
+                    if (SendFile.inboundTransfers.Count > 0 || SendFile.outboundTransfers.Count > 0)
                     {
                         string[] transfers = new string[SendFile.inboundTransfers.Count + SendFile.outboundTransfers.Count];
                         int i = 0;
@@ -209,11 +208,10 @@ namespace FileteleporterTransfert
                         NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer <file's fullpath>" });
                         return;
                     }
-                    pendingTransfer.Add(parameters[0]);
                     if (Directory.Exists(Path.GetDirectoryName(parameters[0])))
                     {
-                        // filename, filelength
-                        client.ClientSend.AskForSendFile(Path.GetFileName(parameters[0]), new System.IO.FileInfo(parameters[0]).Length);
+                        // filepath, filelength
+                        client.ClientSend.AskForSendFile(parameters[0], new System.IO.FileInfo(parameters[0]).Length);
                     }
                     else
                     {

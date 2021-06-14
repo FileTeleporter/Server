@@ -17,7 +17,11 @@ namespace FileTeleporterNetController
                                 "   discover" + Environment.NewLine +
                                 "   connect <ip address>" + Environment.NewLine +
                                 "   disconnect" + Environment.NewLine +
-                                "   transfer <file>", ConsoleColor.Cyan);
+                                "   transfer <file>" + Environment.NewLine +
+                                "   transfer validate <ip> <save path>" + Environment.NewLine +
+                                "   transfer deny <ip>" + Environment.NewLine +
+                                "   transfer list"
+                                , ConsoleColor.Cyan);
             EZConsole.WriteLine("connect to a pc before transfering any files");
 
             EZConsole.AddHeader("cmd", "[CMD]", ConsoleColor.Blue, ConsoleColor.White);

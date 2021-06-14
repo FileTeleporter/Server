@@ -10,9 +10,11 @@ namespace client
 {
     public class ClientHandle
     {
+        public static string serverMachineName { get; private set; }
         public static void Welcome(Packet _packet)
         {
             string _msg = _packet.ReadString();
+            serverMachineName = _packet.ReadString();
             int _myId = _packet.ReadInt();
 
             EZConsole.WriteLine("Client", $"Message from server: {_msg}");
@@ -26,12 +28,16 @@ namespace client
         public static void ValidateDenyTransfer(Packet _packet)
         {
             bool validate = _packet.ReadBool();
-            if(validate)
+            if (validate)
             {
-                SendFile sendFile = new SendFile(NetController.instance.handleNetController.pendingTransfer[0], client.Client.instance.ip);
+                IPAddress to = IPAddress.Parse(Client.instance.ip);
+                SendFile.Transfer transfer = SendFile.outboundTransfers[to];
+
+                SendFile sendFile = new SendFile(transfer.filepath, to.ToString(), transfer);
+                transfer.sendfile = sendFile;
+
                 sendFile.SendPartAsync();
             }
-            NetController.instance.handleNetController.pendingTransfer.RemoveAt(0);
         }
 
     }

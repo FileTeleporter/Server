@@ -5,6 +5,7 @@ using System.IO;
 using System.Net.Sockets;
 using static client.Client;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace client
 {
@@ -41,11 +42,32 @@ namespace client
             }
         }
 
-        public static void AskForSendFile(string fileName, long fileSize)
+        public static void AskForSendFile(string filepath, long fileSize)
         {
+            IPAddress to = IPAddress.Parse(Client.instance.ip);
+            if (FileteleporterTransfert.Network.SendFile.outboundTransfers.ContainsKey(to))
+                FileteleporterTransfert.Network.SendFile.outboundTransfers[to] = new FileteleporterTransfert.Network.SendFile.Transfer(
+                    filepath,
+                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(ClientHandle.serverMachineName, client.Client.instance.ip),
+                    fileSize,
+                    0,
+                    null,
+                    FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised);
+            else
+                FileteleporterTransfert.Network.SendFile.outboundTransfers.Add(to,
+                    new FileteleporterTransfert.Network.SendFile.Transfer(
+                        filepath,
+                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(ClientHandle.serverMachineName, client.Client.instance.ip),
+                        fileSize,
+                        0,
+                        null,
+                        FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised));
+
             using (Packet _packet = new Packet((int)ClientPackets.askSendFile))
             {
-                _packet.Write(fileName);
+                _packet.Write(Path.GetFileName(filepath));
                 _packet.Write(fileSize);
 
                 SendTCPData(_packet);

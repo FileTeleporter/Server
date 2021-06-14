@@ -81,7 +81,7 @@ namespace FileTeleporterNetController
             for (int i = 0; i < parameters.Length; i++)
             {
                 transfers[i] = JsonSerializer.Deserialize<Transfer>(parameters[i]);
-                text += $" - FROM : {transfers[i].from} | TO : {transfers[i].to} | STATUS : {transfers[i].status} | PROGRESS : {transfers[i].progress * 100}%";
+                text += $" - FROM : {transfers[i].from} | TO : {transfers[i].to} | FILEPATH : {transfers[i].filepath} | FILESIZE : {transfers[i].fileSize}| STATUS : {transfers[i].status} | PROGRESS : {transfers[i].progress * 100}%";
                 if (i < parameters.Length - 1)
                     text += Environment.NewLine;
             }
@@ -130,15 +130,17 @@ namespace FileTeleporterNetController
             public string filepath { get; set; }
             public Machine from { get; set; }
             public Machine to { get; set; }
+            public long fileSize { get; set; }
             public float progress { get; set; }
             public Status status { get; set; }
 
 
-            public Transfer(string filepath, Machine from, Machine to, float progress, Status status)
+            public Transfer(string filepath, Machine from, Machine to, long fileSize, float progress, Status status)
             {
                 this.filepath = filepath;
                 this.from = from;
                 this.to = to;
+                this.fileSize = fileSize;
                 this.progress = progress;
                 this.status = status;
             }

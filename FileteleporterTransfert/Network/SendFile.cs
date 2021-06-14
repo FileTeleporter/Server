@@ -15,7 +15,7 @@ namespace FileteleporterTransfert.Network
     class SendFile
     {
         [Serializable]
-        public struct Transfer
+        public class Transfer
         {
             public enum Status
             {
@@ -40,23 +40,26 @@ namespace FileteleporterTransfert.Network
             public string filepath { get; set; }
             public Machine from { get; set; }
             public Machine to { get; set; }
+            public long fileSize { get; set; }
             public float progress { get; set; }
             public Status status { get; set; }
 
             public SendFile sendfile;
 
-            public Transfer(string filepath, Machine from, Machine to, float progress, SendFile sendfile, Status status)
+            public Transfer(string filepath, Machine from, Machine to, long fileSize, float progress, SendFile sendfile, Status status)
             {
                 this.filepath = filepath;
                 this.from = from;
                 this.to = to;
+                this.fileSize = fileSize;
                 this.progress = progress;
                 this.sendfile = sendfile;
                 this.status = status;
             }
         }
-
+        //                       From
         public static Dictionary<IPAddress, Transfer> inboundTransfers = new Dictionary<IPAddress, Transfer>();
+        //                       To
         public static Dictionary<IPAddress, Transfer> outboundTransfers = new Dictionary<IPAddress, Transfer>();
 
         string filePath;
@@ -66,18 +69,21 @@ namespace FileteleporterTransfert.Network
         private TCPFileSend tcp;
         internal TCPFileSend Tcp { get => tcp;}
 
+        private Transfer currentTransfer;
 
         public SendFile() { }
 
-        public SendFile(string filePath, string ip)
+        public SendFile(string filePath, string ip, Transfer transfer)
         {
             this.filePath = filePath;
             this.ip = ip;
+            currentTransfer = transfer;
             finished = false;
         }
 
-        public SendFile(TcpClient client, bool shouldWrite)
+        public SendFile(TcpClient client, bool shouldWrite, Transfer transfer)
         {
+            currentTransfer = transfer;
             finished = false;
             tcp = new TCPFileSend();
             tcp.Connect(client, shouldWrite, this);
@@ -146,11 +152,13 @@ namespace FileteleporterTransfert.Network
 
             while (!finished)
             {
+                currentTransfer.progress = (float)file.Position / file.Length;
                 if(fileLength < file.Position + Constants.BUFFER_FOR_FILE)
                 {
                     if(fileLength == file.Position)
                     {
                         tcp.SendDataSync(fileSmall);
+                        currentTransfer.status = Transfer.Status.Finished;
                         finished = true;
                         callBack?.Invoke();
                         return;
@@ -165,6 +173,8 @@ namespace FileteleporterTransfert.Network
                 readData.Start();
 
                 tcp.SendDataSync(fileSmall);
+
+
 
                 fileSmall = await readData;
             }
@@ -262,10 +272,16 @@ namespace FileteleporterTransfert.Network
             private async void ReceiveCallback(IAsyncResult _result)
             {
                 if(fileStream == null && shouldWrite)
-                    fileStream = File.OpenWrite("result1.dat");
+                    fileStream = File.OpenWrite(sendFile.currentTransfer.filepath);
                 if (t != null)
                 {
                     await t;
+                }
+                if(shouldWrite)
+                {
+                    sendFile.currentTransfer.progress = (float)fileStream.Position / sendFile.currentTransfer.fileSize;
+                    if (fileStream.Position == sendFile.currentTransfer.fileSize)
+                        sendFile.currentTransfer.status = Transfer.Status.Finished;
                 }
                 try
                 {
@@ -279,6 +295,7 @@ namespace FileteleporterTransfert.Network
                     GC.Collect();
                     _data = new byte[_byteLength];
                     Array.Copy(receiveBuffer, _data, _byteLength);
+
 
                     t = new Task(() =>
                     {

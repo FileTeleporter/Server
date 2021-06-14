@@ -89,6 +89,7 @@ namespace server
             using (Packet _packet = new Packet((int)ServerPackets.welcome))
             {
                 _packet.Write(_msg);
+                _packet.Write(Environment.MachineName);
                 _packet.Write(_toClient);
 
                 SendTCPData(_toClient, _packet);
