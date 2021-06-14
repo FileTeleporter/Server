@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using static client.Client;
+using System.Net;
 
 namespace server
 {
@@ -94,14 +95,24 @@ namespace server
             }
         }
 
-        public static void ValidateDenyTransfer(bool validate)
+        public static bool ValidateDenyTransfer(bool validate, IPAddress iPAddress)
         {
             using (Packet _packet = new Packet((int)ServerPackets.validateDenyTransfer))
             {
                 _packet.Write(validate);
 
-                SendTCPData(ServerHandle.pendingTransfer[0], _packet);
-                ServerHandle.pendingTransfer.RemoveAt(0);
+                int clientId;
+                try
+                {
+                    clientId = server.Server.clientsIp.First(x => x.Value.ToString() == iPAddress.ToString()).Key;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return false;
+                }
+                SendTCPData(clientId, _packet);
+                return true;
             }
         }
         #endregion

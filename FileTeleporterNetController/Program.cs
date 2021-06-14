@@ -63,8 +63,10 @@ namespace FileTeleporterNetController
                         break;
 
                     case string a when a.StartsWith("transfer"):
-                        string transParam = a.Split(' ')[1];
-                        NetController.instance.SendData(NetController.ActionOnTransferer.transfer, new string[] { transParam });
+                        string[] splitString = a.Split(' ');
+                        string[] parameters = new string[splitString.Length - 1];
+                        Array.Copy(splitString, 1, parameters, 0, parameters.Length);
+                        NetController.instance.SendData(NetController.ActionOnTransferer.transfer, parameters);
                         break;
 
                     default:

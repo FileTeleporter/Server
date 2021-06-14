@@ -13,6 +13,7 @@ namespace server
         public static int MaxInboundTransfers { get; private set; }
         public static int Port { get; private set; }
         public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public static Dictionary<int, IPAddress> clientsIp = new Dictionary<int, IPAddress>();
         public static Dictionary<int, FileteleporterTransfert.Network.SendFile> inboundTransfers = new Dictionary<int, FileteleporterTransfert.Network.SendFile>();
         public delegate void PacketHandler(int _fromClient, Packet _packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
@@ -60,6 +61,7 @@ namespace server
             {
                 if (clients[i].tcp.socket == null)
                 {
+                    clientsIp[i] = ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
                     clients[i].tcp.Connect(_client);
                     return;
                 }
@@ -78,7 +80,11 @@ namespace server
                 if (inboundTransfers[i].Tcp == null)
                 {
                     inboundTransfers[i] = new FileteleporterTransfert.Network.SendFile(_client, true);
-                    EZConsole.WriteLine("SendFile", $"Inbound transfer from {_client.Client.RemoteEndPoint} at place {i}...");
+
+                    FileteleporterTransfert.Network.SendFile.Transfer transfer = FileteleporterTransfert.Network.SendFile.inboundTransfers[((IPEndPoint)_client.Client.RemoteEndPoint).Address];
+                    transfer.sendfile = inboundTransfers[i];
+
+                    EZConsole.WriteLine("SendFile", $"Inbound transfer from {transfer.from.name} ({_client.Client.RemoteEndPoint}) at place {i}");
                     return;
                 }
             }
@@ -150,7 +156,9 @@ namespace server
         {
             for (int i = 1; i <= MaxPlayers; i++)
             {
-                clients.Add(i, new Client(i));
+                Client client = new Client(i);
+                clients.Add(i, client);
+                clientsIp.Add(i, null);
             }
 
             for (int i = 1; i <= MaxInboundTransfers; i++)

@@ -14,6 +14,7 @@ namespace FileteleporterTransfert
             testCon,
             discoverReturn,
             transferAck,
+            showTransfers,
             infos
         }
 

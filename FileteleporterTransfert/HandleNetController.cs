@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
 using FileteleporterTransfert.Network;
 using System.IO;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FileteleporterTransfert
 {
@@ -99,22 +102,101 @@ namespace FileteleporterTransfert
         {
             switch(parameters[0])
             {
+                // usage : transfer validate <ip> <dest. directory>
                 case string a when a.StartsWith("validate"):
-                    if(server.ServerHandle.pendingTransfer.Count > 0)
+                    if(parameters.Length != 3)
                     {
-                        server.ServerSend.ValidateDenyTransfer(true);
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer validate <ip> <dest. directory>" });
+                        return;
+                    }
+                    if(SendFile.inboundTransfers.Count > 0)
+                    {
+                        IPAddress iPAddress = IPAddress.Parse(parameters[1]);
+                        SendFile.Transfer transfer;
+                        if (SendFile.inboundTransfers.ContainsKey(iPAddress))
+                        {
+                            transfer = SendFile.inboundTransfers[iPAddress];
+                            transfer.status = SendFile.Transfer.Status.Started;
+                        }
+                        else
+                        {
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
+                            return;
+                        }
+
+                        if (Directory.Exists(Path.GetDirectoryName(parameters[2])))
+                            transfer.filepath = parameters[2];
+                        else
+                        {
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The path {parameters[2]} does not appear to be correct" });
+                            return;
+                        }
+                        if (!server.ServerSend.ValidateDenyTransfer(true, iPAddress))
+                        {
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Ip not found" });
+                            return;
+                        }
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Transfer has been validated" });
                         EZConsole.WriteLine("handle", $"Transfer has been validated");
                     }
                     else
                     {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "There is no transfer to validate" });
                         EZConsole.WriteLine("handle", $"No pending transfer");
                     }
                     break;
                 case string a when a.StartsWith("deny"):
-                    if (server.ServerHandle.pendingTransfer.Count > 0)
+                    if (parameters.Length != 2)
                     {
-                        server.ServerSend.ValidateDenyTransfer(false);
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer deny <ip>" });
+                        return;
+                    }
+                    if (SendFile.inboundTransfers.Count > 0)
+                    {
+                        IPAddress iPAddress = IPAddress.Parse(parameters[1]);
+                        SendFile.Transfer transfer;
+                        if (SendFile.inboundTransfers.ContainsKey(iPAddress))
+                        {
+                            transfer = SendFile.inboundTransfers[iPAddress];
+                            transfer.status = SendFile.Transfer.Status.Started;
+                        }
+                        else
+                        {
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
+                            return;
+                        }
+                        if (!server.ServerSend.ValidateDenyTransfer(false, iPAddress))
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Ip not found" });
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Transfer has been denied" });
                         EZConsole.WriteLine("handle", $"Transfer has been denied");
+                    }
+                    else
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "There is no transfer to deny" });
+                        EZConsole.WriteLine("handle", $"No pending transfer");
+                    }
+                    break;
+                case string a when a.StartsWith("list"):
+                    if (parameters.Length != 1)
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list" });
+                        return;
+                    }
+                    if (SendFile.inboundTransfers.Count > 0)
+                    {
+                        string[] transfers = new string[SendFile.inboundTransfers.Count + SendFile.outboundTransfers.Count];
+                        int i = 0;
+                        foreach (SendFile.Transfer item in SendFile.inboundTransfers.Values)
+                        {
+                            transfers[i] = JsonSerializer.Serialize(item);
+                            i++;
+                        }
+                        foreach (SendFile.Transfer item in SendFile.outboundTransfers.Values)
+                        {
+                            transfers[i] = JsonSerializer.Serialize(item);
+                            i++;
+                        }
+                        NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
                     }
                     else
                     {
@@ -122,9 +204,22 @@ namespace FileteleporterTransfert
                     }
                     break;
                 default:
+                    if (parameters.Length != 1)
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer <file's fullpath>" });
+                        return;
+                    }
                     pendingTransfer.Add(parameters[0]);
-                    // filename, filelength
-                    client.ClientSend.AskForSendFile(Path.GetFileName(parameters[0]), new System.IO.FileInfo(parameters[0]).Length);
+                    if (Directory.Exists(Path.GetDirectoryName(parameters[0])))
+                    {
+                        // filename, filelength
+                        client.ClientSend.AskForSendFile(Path.GetFileName(parameters[0]), new System.IO.FileInfo(parameters[0]).Length);
+                    }
+                    else
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The path {parameters[0]} does not appear to be correct" });
+                        return;
+                    }
                     break;
             }
         }

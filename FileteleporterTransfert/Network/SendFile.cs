@@ -8,11 +8,57 @@ using System.Threading;
 using client;
 using FileteleporterTransfert.Tools;
 using System.Net.Sockets;
+using System.Net;
 
 namespace FileteleporterTransfert.Network
 {
     class SendFile
     {
+        [Serializable]
+        public struct Transfer
+        {
+            public enum Status
+            {
+                Initialised,
+                Started,
+                Finished,
+            }
+
+            [Serializable]
+            public struct Machine
+            {
+                public string name { get; set; }
+                public string ipAddress { get; set; }
+
+                public Machine(string name, string ip)
+                {
+                    this.name = name;
+                    this.ipAddress = ip;
+                }
+            }
+
+            public string filepath { get; set; }
+            public Machine from { get; set; }
+            public Machine to { get; set; }
+            public float progress { get; set; }
+            public Status status { get; set; }
+
+            public SendFile sendfile;
+
+            public Transfer(string filepath, Machine from, Machine to, float progress, SendFile sendfile, Status status)
+            {
+                this.filepath = filepath;
+                this.from = from;
+                this.to = to;
+                this.progress = progress;
+                this.sendfile = sendfile;
+                this.status = status;
+            }
+        }
+
+        public static Dictionary<IPAddress, Transfer> inboundTransfers = new Dictionary<IPAddress, Transfer>();
+        public static Dictionary<IPAddress, Transfer> outboundTransfers = new Dictionary<IPAddress, Transfer>();
+
         string filePath;
         private long fileLength;
         public bool finished;
@@ -39,6 +85,7 @@ namespace FileteleporterTransfert.Network
 
         public void SendPartAsync()
         {
+            client.Client.instance.Disconnect();
             Connect();
         }
 
@@ -75,7 +122,6 @@ namespace FileteleporterTransfert.Network
                     $" - Transmit speed : {(float)(fileLength / ((float)timeElapsed/1000)) / 1048576} MiB/s",
 
                 });
-                client.Client.instance.Disconnect();
                 tcp.Disconnect();
                 tcp = null;
                 GC.Collect();

@@ -14,6 +14,7 @@ namespace FileTeleporterNetController
             testCon,
             discoverReturn,
             transferAck,
+            showTransfers,
             infos
         }
 
