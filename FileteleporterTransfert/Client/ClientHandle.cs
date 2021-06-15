@@ -28,15 +28,23 @@ namespace client
         public static void ValidateDenyTransfer(Packet _packet)
         {
             bool validate = _packet.ReadBool();
+            IPAddress to = IPAddress.Parse(Client.instance.ip);
+            SendFile.Transfer transfer = SendFile.outboundTransfers[to];
+
+            client.Client.instance.Disconnect();
+
             if (validate)
             {
-                IPAddress to = IPAddress.Parse(Client.instance.ip);
-                SendFile.Transfer transfer = SendFile.outboundTransfers[to];
-
                 SendFile sendFile = new SendFile(transfer.filepath, to.ToString(), transfer);
+                transfer.status = SendFile.Transfer.Status.Started;
                 transfer.sendfile = sendFile;
 
                 sendFile.SendPartAsync();
+            }else
+            {
+                transfer.status = SendFile.Transfer.Status.Denied;
+                SendFile.finishedTransfers.Add(transfer);
+                SendFile.outboundTransfers.Remove(to);
             }
         }
 

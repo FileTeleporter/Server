@@ -108,6 +108,7 @@ namespace FileTeleporterNetController
                 Initialised,
                 Started,
                 Finished,
+                Denied,
             }
 
             [Serializable]

@@ -20,7 +20,9 @@ namespace FileTeleporterNetController
                                 "   transfer <file>" + Environment.NewLine +
                                 "   transfer validate <ip> <save path>" + Environment.NewLine +
                                 "   transfer deny <ip>" + Environment.NewLine +
-                                "   transfer list"
+                                "   transfer list <pending/finished>" + Environment.NewLine +
+                                "   transfer get first finished" + Environment.NewLine +
+                                "   transfer delete first finished"
                                 , ConsoleColor.Cyan);
             EZConsole.WriteLine("connect to a pc before transfering any files");
 

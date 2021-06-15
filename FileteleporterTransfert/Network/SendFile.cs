@@ -22,6 +22,7 @@ namespace FileteleporterTransfert.Network
                 Initialised,
                 Started,
                 Finished,
+                Denied
             }
 
             [Serializable]
@@ -62,6 +63,8 @@ namespace FileteleporterTransfert.Network
         //                       To
         public static Dictionary<IPAddress, Transfer> outboundTransfers = new Dictionary<IPAddress, Transfer>();
 
+        public static List<Transfer> finishedTransfers = new List<Transfer>();
+
         string filePath;
         private long fileLength;
         public bool finished;
@@ -91,7 +94,6 @@ namespace FileteleporterTransfert.Network
 
         public void SendPartAsync()
         {
-            client.Client.instance.Disconnect();
             Connect();
         }
 
@@ -158,7 +160,11 @@ namespace FileteleporterTransfert.Network
                     if(fileLength == file.Position)
                     {
                         tcp.SendDataSync(fileSmall);
+
                         currentTransfer.status = Transfer.Status.Finished;
+                        finishedTransfers.Add(currentTransfer);
+                        outboundTransfers.Remove(IPAddress.Parse(currentTransfer.to.ipAddress));
+
                         finished = true;
                         callBack?.Invoke();
                         return;
@@ -272,7 +278,13 @@ namespace FileteleporterTransfert.Network
             private async void ReceiveCallback(IAsyncResult _result)
             {
                 if(fileStream == null && shouldWrite)
+                {
+                    if(File.Exists(sendFile.currentTransfer.filepath))
+                    {
+                        File.Delete(sendFile.currentTransfer.filepath);
+                    }
                     fileStream = File.OpenWrite(sendFile.currentTransfer.filepath);
+                }
                 if (t != null)
                 {
                     await t;
@@ -281,7 +293,11 @@ namespace FileteleporterTransfert.Network
                 {
                     sendFile.currentTransfer.progress = (float)fileStream.Position / sendFile.currentTransfer.fileSize;
                     if (fileStream.Position == sendFile.currentTransfer.fileSize)
+                    {
                         sendFile.currentTransfer.status = Transfer.Status.Finished;
+                        finishedTransfers.Add(sendFile.currentTransfer);
+                        inboundTransfers.Remove(IPAddress.Parse(sendFile.currentTransfer.from.ipAddress));
+                    }
                 }
                 try
                 {

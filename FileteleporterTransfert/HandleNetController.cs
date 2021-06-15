@@ -102,7 +102,7 @@ namespace FileteleporterTransfert
             switch(parameters[0])
             {
                 // usage : transfer validate <ip> <dest. directory>
-                case string a when a.StartsWith("validate"):
+                case "validate":
                     if(parameters.Length != 3)
                     {
                         NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer validate <ip> <dest. directory>" });
@@ -144,7 +144,7 @@ namespace FileteleporterTransfert
                         EZConsole.WriteLine("handle", $"No pending transfer");
                     }
                     break;
-                case string a when a.StartsWith("deny"):
+                case "deny":
                     if (parameters.Length != 2)
                     {
                         NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer deny <ip>" });
@@ -157,7 +157,9 @@ namespace FileteleporterTransfert
                         if (SendFile.inboundTransfers.ContainsKey(iPAddress))
                         {
                             transfer = SendFile.inboundTransfers[iPAddress];
-                            transfer.status = SendFile.Transfer.Status.Finished;
+                            transfer.status = SendFile.Transfer.Status.Denied;
+                            SendFile.finishedTransfers.Add(transfer);
+                            SendFile.inboundTransfers.Remove(iPAddress);
                         }
                         else
                         {
@@ -175,32 +177,82 @@ namespace FileteleporterTransfert
                         EZConsole.WriteLine("handle", $"No pending transfer");
                     }
                     break;
-                case string a when a.StartsWith("list"):
-                    if (parameters.Length != 1)
+                case "list":
+                    if (parameters.Length != 2)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list" });
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list <pending/finished>" });
                         return;
                     }
-                    if (SendFile.inboundTransfers.Count > 0 || SendFile.outboundTransfers.Count > 0)
+                    switch (parameters[1])
                     {
-                        string[] transfers = new string[SendFile.inboundTransfers.Count + SendFile.outboundTransfers.Count];
-                        int i = 0;
-                        foreach (SendFile.Transfer item in SendFile.inboundTransfers.Values)
-                        {
-                            transfers[i] = JsonSerializer.Serialize(item);
-                            i++;
-                        }
-                        foreach (SendFile.Transfer item in SendFile.outboundTransfers.Values)
-                        {
-                            transfers[i] = JsonSerializer.Serialize(item);
-                            i++;
-                        }
-                        NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
+                        case "finished":
+                            if (SendFile.finishedTransfers.Count > 0)
+                            {
+                                string[] transfers = new string[SendFile.finishedTransfers.Count];
+                                int i = 0;
+                                foreach (SendFile.Transfer item in SendFile.finishedTransfers)
+                                {
+                                    transfers[i] = JsonSerializer.Serialize(item);
+                                    i++;
+                                }
+                                NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
+                            }
+                            else
+                            {
+                                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                            }
+                            break;
+                        case "pending":
+                            if (SendFile.inboundTransfers.Count > 0 || SendFile.outboundTransfers.Count > 0)
+                            {
+                                string[] transfers = new string[SendFile.inboundTransfers.Count + SendFile.outboundTransfers.Count];
+                                int i = 0;
+                                foreach (SendFile.Transfer item in SendFile.inboundTransfers.Values)
+                                {
+                                    transfers[i] = JsonSerializer.Serialize(item);
+                                    i++;
+                                }
+                                foreach (SendFile.Transfer item in SendFile.outboundTransfers.Values)
+                                {
+                                    transfers[i] = JsonSerializer.Serialize(item);
+                                    i++;
+                                }
+                                NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
+                            }
+                            else
+                            {
+                                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                            }
+                            break;
+                        default:
+                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list <pending/finished>" });
+                            break;
+                    }
+                    break;
+                case "getFirstFinished":
+                    if (parameters.Length != 1)
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer get first finished" });
+                        return;
+                    }
+                    if(SendFile.finishedTransfers.Count > 0)
+                        NetController.instance.SendData(NetController.ActionOnController.showTransfers, new string[] { JsonSerializer.Serialize(SendFile.finishedTransfers[0]) });
+                    else
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                    break;
+                case "deleteFirstFinished":
+                    if (parameters.Length != 1)
+                    {
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer delete first finished" });
+                        return;
+                    }
+                    if (SendFile.finishedTransfers.Count > 0)
+                    {
+                        SendFile.finishedTransfers.RemoveAt(0);
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "First finished transfer deleted" });
                     }
                     else
-                    {
-                        EZConsole.WriteLine("handle", $"No pending transfer");
-                    }
+                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to delete" });
                     break;
                 default:
                     if (parameters.Length != 1)
