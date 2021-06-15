@@ -16,10 +16,9 @@ namespace FileteleporterTransfert.Network
         private static int discoveryPort = 56237;
         public static UdpClient udpClient;
         public static Dictionary<IPAddress, string> machines = new Dictionary<IPAddress, string>();
+        private static Dictionary<IPAddress, IPAddress> ipsAndBcs = new Dictionary<IPAddress, IPAddress>();
         public static void Discover()
         {
-            // ip thand broadcast
-            Dictionary<IPAddress, IPAddress> ipsAndBc = new Dictionary<IPAddress, IPAddress>();
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if(ni.OperationalStatus != OperationalStatus.Down)
@@ -28,7 +27,7 @@ namespace FileteleporterTransfert.Network
                     {
                         if(unicastIP.Address.AddressFamily == AddressFamily.InterNetwork)
                         {
-                            ipsAndBc.Add(unicastIP.Address, GetBroadcastAddress(unicastIP));
+                            ipsAndBcs.Add(unicastIP.Address, GetBroadcastAddress(unicastIP));
                         }
                     }
                 }
@@ -37,12 +36,17 @@ namespace FileteleporterTransfert.Network
             udpClient = new UdpClient();
             udpClient.Client.Bind(new IPEndPoint(IPAddress.Any.Address, discoveryPort));
             ReceiveBroadcast();
-            foreach (KeyValuePair<IPAddress,IPAddress> keyValuePair in ipsAndBc)
+            SendBroadCast();
+        }
+
+        private static async void SendBroadCast()
+        {
+            foreach (KeyValuePair<IPAddress, IPAddress> keyValuePair in ipsAndBcs)
             {
                 string message = Environment.MachineName;
                 message += $";{keyValuePair.Key}";
                 byte[] bMessage = Encoding.UTF8.GetBytes(message);
-                udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), discoveryPort);
+                await udpClient.SendAsync(bMessage, bMessage.Length, keyValuePair.Value.ToString(), discoveryPort);
                 EZConsole.WriteLine("Discovery", "sent : " + message + " to : " + keyValuePair.Value.ToString());
             }
         }
@@ -64,8 +68,13 @@ namespace FileteleporterTransfert.Network
                     pcName = messageSplited[0];
                     pcIp = messageSplited[1];
                 });
-                machines.Add(IPAddress.Parse(pcIp), pcName);
-                EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
+                IPAddress pcIP = IPAddress.Parse(pcIp);
+                if (!machines.ContainsKey(pcIP) && !ipsAndBcs.ContainsKey(pcIP))
+                {
+                    machines.Add(IPAddress.Parse(pcIp), pcName);
+                    SendBroadCast();
+                    EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
+                }
             }
         }
 
