@@ -2,13 +2,14 @@
 using FileTeleporterNetController.Tools;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace FileTeleporterNetController
 {
     class Program
     {
-
-        private static Action enterCommand;
+        private static bool isRunning = false;
+        private static Action readInput;
         static void Main(string[] args)
         {
             EZConsole.WriteLine("Welcome to the fileteleporter net controller", ConsoleColor.Cyan);
@@ -26,33 +27,22 @@ namespace FileTeleporterNetController
                                 , ConsoleColor.Cyan);
             EZConsole.WriteLine("connect to a pc before transfering any files");
 
-            EZConsole.AddHeader("cmd", "[CMD]", ConsoleColor.Blue, ConsoleColor.White);
-            EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Blue, ConsoleColor.White);
-            EZConsole.AddHeader("handle", "[HANDLENETCONTROLLER]", ConsoleColor.Magenta, ConsoleColor.White);
-            EZConsole.AddHeader("error", "[ERROR]", ConsoleColor.Red, ConsoleColor.Red);
+            EZConsole.AddHeader("cmd", "[CMD]", ConsoleColor.Cyan, ConsoleColor.White);
+            EZConsole.AddHeader("NetController", "[NETCONTROLLER]", ConsoleColor.Yellow, ConsoleColor.White);
+            EZConsole.AddHeader("transfers", "[TRANSFERS]", ConsoleColor.Magenta, ConsoleColor.White);
+            EZConsole.AddHeader("errors", "[ERRORS]", ConsoleColor.Red, ConsoleColor.Red);
             EZConsole.AddHeader("infos", "[INFOS]", ConsoleColor.Blue, ConsoleColor.White);
 
 
             NetController netController = new NetController("127.0.0.1", 56235, 56236);
-            EnterCommand();
-            while(true)
-            {
-                enterCommand?.Invoke();
-                Thread.Sleep(500);
-            }
-        }
 
-        public static void EnterCommand()
-        {
-            enterCommand = () =>
+            readInput = () =>
             {
-                EZConsole.Write(" > ", ConsoleColor.Cyan);
                 switch (Console.ReadLine())
                 {
                     case string a when a.StartsWith("test connection"):
                         NetController.instance.SendData(NetController.ActionOnTransferer.testCon);
                         EZConsole.WriteLine("cmd", "Testing connection...");
-                        enterCommand = null;
                         break;
 
                     case string a when a.StartsWith("discover"):
@@ -80,6 +70,48 @@ namespace FileTeleporterNetController
                         break;
                 }
             };
+
+            Task t = new Task(() =>
+            {
+                while(true)
+                {
+                    readInput?.Invoke();
+                }
+            });
+            t.Start();
+
+            isRunning = true;
+
+            Thread mainThread = new Thread(new ThreadStart(MainThread));
+            mainThread.Start();
+        }
+
+        private static void MainThread()
+        {
+            EZConsole.WriteLine($"Main thread started. Running at {Constants.TICKS_PER_SEC} ticks per second.", ConsoleColor.Green);
+            DateTime _nextLoop = DateTime.Now;
+
+            while (isRunning)
+            {
+                while (_nextLoop < DateTime.Now)
+                {
+                    // If the time for the next loop is in the past, aka it's time to execute another tick
+                    Update(); // Execute game logic
+
+                    _nextLoop = _nextLoop.AddMilliseconds(Constants.MS_PER_TICK); // Calculate at what point in time the next tick should be executed
+
+                    if (_nextLoop > DateTime.Now)
+                    {
+                        // If the execution time for the next tick is in the future, aka the server is NOT running behind
+                        Thread.Sleep(_nextLoop - DateTime.Now); // Let the thread sleep until it's needed again.
+                    }
+                }
+            }
+        }
+
+        private static void Update()
+        {
+            ThreadManager.UpdateMain();
         }
     }
 }

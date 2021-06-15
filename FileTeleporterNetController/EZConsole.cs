@@ -31,7 +31,10 @@ namespace FileTeleporterNetController.Tools
         /// <param name="text">The text to write</param>
         public static void WriteLine(string text)
         {
-            Console.WriteLine(text);
+            ThreadManager.ExecuteOnMainThread(() =>
+            {
+                Console.WriteLine(text);
+            });
         }
 
         /// <summary>
@@ -41,10 +44,13 @@ namespace FileTeleporterNetController.Tools
         /// <param name="color">The wanted color</param>
         public static void WriteLine(string text, ConsoleColor color)
         {
-            ConsoleColor defaultColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            Console.WriteLine(text);
-            Console.ForegroundColor = defaultColor;
+            ThreadManager.ExecuteOnMainThread(() =>
+            {
+                ConsoleColor defaultColor = Console.ForegroundColor;
+                Console.ForegroundColor = color;
+                Console.WriteLine(text);
+                Console.ForegroundColor = defaultColor;
+            });
         }
 
         /// <summary>
@@ -54,47 +60,55 @@ namespace FileTeleporterNetController.Tools
         /// <param name="text">The text to write</param>
         public static void WriteLine(string headerType, string text)
         {
-            Console.SetCursorPosition(0, Console.CursorTop);
-            if (senderHeaders.ContainsKey(headerType))
+            ThreadManager.ExecuteOnMainThread(() =>
             {
-                Header header = senderHeaders[headerType];
-                ConsoleColor defaultColor = Console.ForegroundColor;
-                Console.ForegroundColor = header.headerColor;
-                Console.Write(header.header + " ");
-                Console.ForegroundColor = header.textColor;
-                Console.Write(text + Environment.NewLine);
-                Console.ForegroundColor = defaultColor;
-            }
-            else
-            {
-                Console.WriteLine(text);
-            }
+                if (senderHeaders.ContainsKey(headerType))
+                {
+                    Header header = senderHeaders[headerType];
+                    ConsoleColor defaultColor = Console.ForegroundColor;
+                    Console.ForegroundColor = header.headerColor;
+                    Console.Write(header.header + " ");
+                    Console.ForegroundColor = header.textColor;
+                    Console.Write(text + Environment.NewLine);
+                    Console.ForegroundColor = defaultColor;
+                }
+                else
+                {
+                    Console.WriteLine(text);
+                }
+            });
         }
 
         public static void Write(string text, ConsoleColor color)
         {
-            ConsoleColor defaultColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            Console.Write(text);
-            Console.ForegroundColor = defaultColor;
+            ThreadManager.ExecuteOnMainThread(() =>
+            {
+                ConsoleColor defaultColor = Console.ForegroundColor;
+                Console.ForegroundColor = color;
+                Console.Write(text);
+                Console.ForegroundColor = defaultColor;
+            });
         }
 
         public static void Write(string headerType, string text)
         {
-            if (senderHeaders.ContainsKey(headerType))
+            ThreadManager.ExecuteOnMainThread(() =>
             {
-                Header header = senderHeaders[headerType];
-                ConsoleColor defaultColor = Console.ForegroundColor;
-                Console.ForegroundColor = header.headerColor;
-                Console.Write(header.header + " ");
-                Console.ForegroundColor = header.textColor;
-                Console.Write(text);
-                Console.ForegroundColor = defaultColor;
-            }
-            else
-            {
-                Console.WriteLine(text);
-            }
+                if (senderHeaders.ContainsKey(headerType))
+                {
+                    Header header = senderHeaders[headerType];
+                    ConsoleColor defaultColor = Console.ForegroundColor;
+                    Console.ForegroundColor = header.headerColor;
+                    Console.Write(header.header + " ");
+                    Console.ForegroundColor = header.textColor;
+                    Console.Write(text);
+                    Console.ForegroundColor = defaultColor;
+                }
+                else
+                {
+                    Console.WriteLine(text);
+                }
+            });
         }
 
         /// <summary>

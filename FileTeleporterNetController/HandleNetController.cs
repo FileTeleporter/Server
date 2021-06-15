@@ -5,15 +5,16 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FileTeleporterNetController.Tools;
 using System.Threading;
 
 namespace FileTeleporterNetController
 {
 
-    class HandleNetController
+    public class HandleNetController
     {
         Dictionary<NetController.ActionOnController, Action<string[]>> packetHandler;
+
+        private Show show;
 
         public HandleNetController()
         {
@@ -30,6 +31,7 @@ namespace FileTeleporterNetController
                 { NetController.ActionOnController.showTransfers, ShowTransfers },
                 { NetController.ActionOnController.infos, ShowInfos },
             };
+            show = new ShowConsole();
         }
 
         public void Handle(byte[] _data)
@@ -52,40 +54,35 @@ namespace FileTeleporterNetController
 
             }catch (Exception e)
             {
-                EZConsole.WriteLine("error", $"Error while handling the packet {e.ToString()}");
+                show.ShowErrors("Error while parsing packet", $"Error while handling the packet {e.ToString()}");
             }
 
         }
 
         public void TestConnection(string[] parameters)
         {
-            EZConsole.WriteLine("handle", "Connection ok");
-            Program.EnterCommand();
+            show.ShowInfos("Testing connection with the transferer", "Connection OK");
         }
 
         public void DiscoverReturn(string[] parameters)
         {
-            EZConsole.WriteLine("handle", $"{parameters[0]} {parameters[1]}");
+            show.ShowInfos("discover", $"{parameters[0]} {parameters[1]}");
         }
 
         public void TransferAcknowledgement(string[] parameters)
         {
-            EZConsole.WriteLine("handle", $"Would you like to send you {parameters[0]} with a size of {long.Parse(parameters[1]) / 1048576}Mio from {parameters[2]}" + Environment.NewLine +
-                                "transfer validate or transfer deny");
+            show.ShowTransfers("Inbound transfer", $"Would you like to receive {parameters[0]} with a size of {Math.Round(float.Parse(parameters[1]) / 1048576, 2)}MiB from {parameters[2]}" + Environment.NewLine +
+                           "transfer validate or transfer deny");
         }
 
         public void ShowTransfers(string[] parameters)
         {
             Transfer[] transfers = new Transfer[parameters.Length];
-            string text = "Current transfers : " + Environment.NewLine;
             for (int i = 0; i < parameters.Length; i++)
             {
                 transfers[i] = JsonSerializer.Deserialize<Transfer>(parameters[i]);
-                text += $" - FROM : {transfers[i].from} | TO : {transfers[i].to} | FILEPATH : {transfers[i].filepath} | FILESIZE : {transfers[i].fileSize}| STATUS : {transfers[i].status} | PROGRESS : {transfers[i].progress * 100}%";
-                if (i < parameters.Length - 1)
-                    text += Environment.NewLine;
             }
-            EZConsole.WriteLine("infos", text);
+            show.ShowTransfers("All the transfers", transfers);
         }
 
         public void ShowInfos(string[] parameters)
@@ -97,7 +94,7 @@ namespace FileTeleporterNetController
                 if (i < parameters.Length - 1)
                     message += Environment.NewLine;
             }
-            EZConsole.WriteLine("infos", message);
+            show.ShowInfos("infos", message);
         }
 
         [Serializable]
