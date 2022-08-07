@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System;
 using FileteleporterTransfert.Tools;
 using FileteleporterTransfert;
+using FileteleporterTransfert.Network;
 
 namespace client
 {

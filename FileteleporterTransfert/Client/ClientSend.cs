@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using static client.Client;
 using System.Threading.Tasks;
 using System.Net;
+using FileteleporterTransfert.Network;
 
 namespace client
 {

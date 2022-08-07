@@ -4,6 +4,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using FileteleporterTransfert.Tools;
+using FileteleporterTransfert.Network;
 
 namespace server
 {
@@ -14,7 +15,7 @@ namespace server
         public static int Port { get; private set; }
         public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public static Dictionary<int, IPAddress> clientsIp = new Dictionary<int, IPAddress>();
-        public static Dictionary<int, FileteleporterTransfert.Network.SendFile> inboundTransfers = new Dictionary<int, FileteleporterTransfert.Network.SendFile>();
+        public static Dictionary<int, SendFile> inboundTransfers = new Dictionary<int, SendFile>();
         public delegate void PacketHandler(int _fromClient, Packet _packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
 
@@ -79,9 +80,8 @@ namespace server
             {
                 if (inboundTransfers[i].Tcp == null)
                 {
-
-                    FileteleporterTransfert.Network.SendFile.Transfer transfer = FileteleporterTransfert.Network.SendFile.inboundTransfers[((IPEndPoint)_client.Client.RemoteEndPoint).Address];
-                    FileteleporterTransfert.Network.SendFile sendFile = new FileteleporterTransfert.Network.SendFile(_client, true, transfer);
+                    SendFile.Transfer transfer = SendFile.inboundTransfers[((IPEndPoint)_client.Client.RemoteEndPoint).Address];
+                    SendFile sendFile = new SendFile(_client, true, transfer);
                     transfer.sendfile = sendFile;
 
                     inboundTransfers[i] = sendFile;

@@ -6,6 +6,7 @@ using System.Text;
 using System.Drawing;
 using FileteleporterTransfert.Tools;
 using FileteleporterTransfert;
+using FileteleporterTransfert.Network;
 using System.Net;
 
 namespace server
@@ -33,25 +34,25 @@ namespace server
 
             IPAddress from = ((IPEndPoint)Server.clients[_fromClient].tcp.socket.Client.RemoteEndPoint).Address;
 
-            if (FileteleporterTransfert.Network.SendFile.inboundTransfers.ContainsKey(from))
-                FileteleporterTransfert.Network.SendFile.inboundTransfers[from] = new FileteleporterTransfert.Network.SendFile.Transfer(
+            if (SendFile.inboundTransfers.ContainsKey(from))
+                SendFile.inboundTransfers[from] = new SendFile.Transfer(
                     null,
-                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
-                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                    new SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
+                    new SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
                     fileSize,
                     0,
                     null,
-                    FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised);
+                    SendFile.Transfer.Status.Initialised);
             else
-                FileteleporterTransfert.Network.SendFile.inboundTransfers.Add(from,
-                    new FileteleporterTransfert.Network.SendFile.Transfer(
+                SendFile.inboundTransfers.Add(from,
+                    new SendFile.Transfer(
                         null,
-                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
-                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                        new SendFile.Transfer.Machine(Server.clients[_fromClient].name, from.ToString()),
+                        new SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
                         fileSize,
                         0,
                         null,
-                        FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised));
+                        SendFile.Transfer.Status.Initialised));
 
             NetController.instance.SendData(NetController.ActionOnController.transferAck, new string[] { fileName, fileSize.ToString(), Server.clients[_fromClient].name });
         }

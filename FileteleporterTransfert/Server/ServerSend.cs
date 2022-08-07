@@ -4,6 +4,7 @@ using System.Text;
 using System.Linq;
 using static client.Client;
 using System.Net;
+using FileteleporterTransfert.Network;
 
 namespace server
 {

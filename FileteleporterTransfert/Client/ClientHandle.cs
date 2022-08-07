@@ -31,7 +31,7 @@ namespace client
             IPAddress to = IPAddress.Parse(Client.instance.ip);
             SendFile.Transfer transfer = SendFile.outboundTransfers[to];
 
-            client.Client.instance.Disconnect();
+            Client.instance.Disconnect();
 
             if (validate)
             {

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace client
+namespace FileteleporterTransfert.Network
 {
     /// <summary>Sent from server to client.</summary>
     public enum ServerPackets
