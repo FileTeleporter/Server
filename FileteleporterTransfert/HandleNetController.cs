@@ -77,8 +77,13 @@ namespace FileteleporterTransfert
             {
                 EZConsole.WriteLine("handle", $"Connect to {parameters[0]}");
                 Client.Client connectClient = new Client.Client(parameters[0], Environment.MachineName);
-                Client.Client.instance.ConnectToServer();
-                NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Client connected to {Client.Client.instance.ip} as {Environment.MachineName}" });
+                if (Client.Client.instance != null)
+                {
+                    Client.Client.instance.ConnectToServer();
+                    NetController.instance.SendData(NetController.ActionOnController.Infos,
+                        new string[]
+                            { $"Client connected to {Client.Client.instance.ip} as {Environment.MachineName}" });
+                }
             }
             else
             {

@@ -20,6 +20,7 @@ namespace FileteleporterTransfert
             EZConsole.AddHeader("SendFile", "[SENDFILE]", ConsoleColor.DarkCyan, ConsoleColor.Cyan);
             EZConsole.AddHeader("infos", "[INFOS]", ConsoleColor.Blue, ConsoleColor.White);
             
+            var netController = new NetController("127.0.0.1", 56236, 56235);
 
             Console.Title = "FileTeleporter Server";
             _isRunning = true;
@@ -27,7 +28,7 @@ namespace FileteleporterTransfert
             var mainThread = new Thread(MainThread);
             mainThread.Start();
 
-            Server.Server.Start(50, 50, 26950);
+            Server.Server.Start(50, 50, Constants.MAIN_PORT);
 
             Network.NetDiscovery.Discover();
         }

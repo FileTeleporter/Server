@@ -9,4 +9,6 @@ class Constants
     public const int BUFFER_FOR_FILE = 1048576;
     public const int SEND_FILE_PORT = 60589;
     public const int DATA_BUFFER_SIZE = 4096;
+    public const int DISCOVERY_PORT = 56237;
+    public const int MAIN_PORT = 26950;
 }

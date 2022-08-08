@@ -12,7 +12,6 @@ namespace FileteleporterTransfert.Client
         public static Client instance;
 
         public readonly string ip;
-        private int port = 26950;
         public string name;
         public int myId = 0;
         public TCP tcp;
@@ -64,7 +63,7 @@ namespace FileteleporterTransfert.Client
                 };
 
                 receiveBuffer = new byte[Constants.DATA_BUFFER_SIZE];
-                socket.BeginConnect(instance.ip, instance.port, ConnectCallback, socket);
+                socket.BeginConnect(instance.ip, Constants.MAIN_PORT, ConnectCallback, socket);
             }
 
             /// <summary>Initializes the newly connected client's TCP-related info.</summary>
@@ -195,7 +194,7 @@ namespace FileteleporterTransfert.Client
 
             public UDP()
             {
-                endPoint = new IPEndPoint(IPAddress.Parse(instance.ip), instance.port);
+                endPoint = new IPEndPoint(IPAddress.Parse(instance.ip), Constants.MAIN_PORT);
             }
 
             /// <summary>Attempts to connect to the server via UDP.</summary>

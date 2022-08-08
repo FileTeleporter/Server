@@ -11,7 +11,6 @@ namespace FileteleporterTransfert.Network
 {
     public static class NetDiscovery
     {
-        private static int discoveryPort = 56237;
         private static UdpClient _udpClient;
         private static readonly Dictionary<IPAddress, string> Machines = new();
         public static void Discover()
@@ -31,14 +30,14 @@ namespace FileteleporterTransfert.Network
             }
 
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(new IPEndPoint(IPAddress.Any.Address, discoveryPort));
+            _udpClient.Client.Bind(new IPEndPoint(IPAddress.Any.Address, Constants.DISCOVERY_PORT));
             ReceiveBroadcast();
             foreach (var keyValuePair in ipsAndBc)
             {
                 var message = Environment.MachineName;
                 message += $";{keyValuePair.Key}";
                 var bMessage = Encoding.UTF8.GetBytes(message);
-                _udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), discoveryPort);
+                _udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), Constants.DISCOVERY_PORT);
                 EZConsole.WriteLine("Discovery", "sent : " + message + " to : " + keyValuePair.Value);
             }
         }
@@ -59,9 +58,13 @@ namespace FileteleporterTransfert.Network
                     var messageSplited = recvMessage.Split(";");
                     pcName = messageSplited[0];
                     pcIp = messageSplited[1];
+                    var ip = IPAddress.Parse(pcIp);
+                    if (Machines.ContainsKey(ip)) return;
+                    if (pcName == Environment.MachineName) return;
+                    Machines.Add(ip, pcName);
+                    EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
+
                 });
-                Machines.Add(IPAddress.Parse(pcIp), pcName);
-                EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
             }
         }
 
