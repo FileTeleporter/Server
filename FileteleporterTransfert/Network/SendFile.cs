@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
-using client;
 using FileteleporterTransfert.Tools;
 using System.Net.Sockets;
 using System.Net;
@@ -28,13 +27,13 @@ namespace FileteleporterTransfert.Network
             [Serializable]
             public struct Machine
             {
-                public string name { get; set; }
-                public string ipAddress { get; set; }
+                public string Name { get; set; }
+                public string IpAddress { get; set; }
 
                 public Machine(string name, string ip)
                 {
-                    this.name = name;
-                    this.ipAddress = ip;
+                    this.Name = name;
+                    this.IpAddress = ip;
                 }
             }
 
@@ -42,7 +41,7 @@ namespace FileteleporterTransfert.Network
             public Machine from { get; set; }
             public Machine to { get; set; }
             public long fileSize { get; set; }
-            public float progress { get; set; }
+            public float progress {get; set; }
             public Status status { get; set; }
 
             public SendFile sendfile;
@@ -59,11 +58,11 @@ namespace FileteleporterTransfert.Network
             }
         }
         //                       From
-        public static Dictionary<IPAddress, Transfer> inboundTransfers = new Dictionary<IPAddress, Transfer>();
+        public static Dictionary<IPAddress, Transfer> inboundTransfers = new();
         //                       To
-        public static Dictionary<IPAddress, Transfer> outboundTransfers = new Dictionary<IPAddress, Transfer>();
+        public static Dictionary<IPAddress, Transfer> outboundTransfers = new();
 
-        public static List<Transfer> finishedTransfers = new List<Transfer>();
+        public static List<Transfer> finishedTransfers = new();
 
         string filePath;
         private long fileLength;
@@ -114,15 +113,15 @@ namespace FileteleporterTransfert.Network
 
         private async void SendAsync(IAsyncResult asyncResult)
         {
-            long timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+            var timeStart = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
             await Task.Run(() => SendPart(() =>
             {
-                long timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
-                long timeElapsed = timeEnd - timeStart;
+                var timeEnd = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                var timeElapsed = timeEnd - timeStart;
                 if (timeElapsed == 0)
                     timeElapsed = 1;
 
-                NetController.instance.SendData(NetController.ActionOnController.infos, new string[]
+                NetController.instance.SendData(NetController.ActionOnController.Infos, new[]
                 {
                     $" - Raw length : {fileLength} B",
                     $" - File length : {fileLength / 1048576} MiB",
@@ -139,16 +138,16 @@ namespace FileteleporterTransfert.Network
         private async void SendPart(Action callBack)
         {
             byte[] fileSmall;
-            FileStream file = File.OpenRead(filePath);
+            var file = File.OpenRead(filePath);
             fileLength = file.Length;
 
-            int lengthToRead = 0;
+            var lengthToRead = 0;
             if (fileLength < Constants.BUFFER_FOR_FILE)
                 lengthToRead = (int)fileLength;
             else
                 lengthToRead = Constants.BUFFER_FOR_FILE;
 
-            Task<byte[]> readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
+            var readData = new Task<byte[]>(() => ReadData(file, lengthToRead));
             readData.Start();
             fileSmall = await readData;
 
@@ -163,7 +162,7 @@ namespace FileteleporterTransfert.Network
 
                         currentTransfer.status = Transfer.Status.Finished;
                         finishedTransfers.Add(currentTransfer);
-                        outboundTransfers.Remove(IPAddress.Parse(currentTransfer.to.ipAddress));
+                        outboundTransfers.Remove(IPAddress.Parse(currentTransfer.to.IpAddress));
 
                         finished = true;
                         callBack?.Invoke();
@@ -188,7 +187,7 @@ namespace FileteleporterTransfert.Network
 
         private byte[] ReadData(FileStream stream, int lengthToRead)
         {
-            byte[] toRead = new byte[lengthToRead];
+            var toRead = new byte[lengthToRead];
             stream.Read(toRead, 0, lengthToRead);
             return toRead;
         }
@@ -222,16 +221,16 @@ namespace FileteleporterTransfert.Network
                 socket.BeginConnect(ip, Constants.SEND_FILE_PORT, ConnectCallback, socket);
             }
 
-            public void Connect(TcpClient _socket, bool shouldWrite, SendFile sendFile)
+            public void Connect(TcpClient socket, bool shouldWrite, SendFile sendFile)
             {
                 this.shouldWrite = shouldWrite;
                 this.sendFile = sendFile;
 
-                socket = _socket;
-                socket.ReceiveBufferSize = dataBufferSize;
-                socket.SendBufferSize = dataBufferSize;
+                this.socket = socket;
+                this.socket.ReceiveBufferSize = dataBufferSize;
+                this.socket.SendBufferSize = dataBufferSize;
 
-                stream = socket.GetStream();
+                stream = this.socket.GetStream();
 
                 receiveBuffer = new byte[dataBufferSize];
 
@@ -239,9 +238,9 @@ namespace FileteleporterTransfert.Network
             }
 
             /// <summary>Initializes the newly connected client's TCP-related info.</summary>
-            private void ConnectCallback(IAsyncResult _result)
+            private void ConnectCallback(IAsyncResult result)
             {
-                socket.EndConnect(_result);
+                socket.EndConnect(result);
 
                 if (!socket.Connected)
                 {
@@ -263,19 +262,19 @@ namespace FileteleporterTransfert.Network
                         stream.Write(file, 0, file.Length); // Send data to server
                     }
                 }
-                catch (Exception _ex)
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Error sending data to server via TCP: {_ex}");
+                    Console.WriteLine($"Error sending data to server via TCP: {ex}");
                 }
             }
 
             /// <summary>Reads incoming data from the stream.</summary>
-            private byte[] _data;
+            private byte[] data;
             // pls only use this type of file stream, if use File.Open perfs will suffer
             private FileStream fileStream;
-            Task t = null;
+            Task t;
             /// <summary>Reads incoming data from the stream.</summary>
-            private async void ReceiveCallback(IAsyncResult _result)
+            private async void ReceiveCallback(IAsyncResult result)
             {
                 if(fileStream == null && shouldWrite)
                 {
@@ -291,36 +290,40 @@ namespace FileteleporterTransfert.Network
                 }
                 if(shouldWrite)
                 {
-                    sendFile.currentTransfer.progress = (float)fileStream.Position / sendFile.currentTransfer.fileSize;
-                    if (fileStream.Position == sendFile.currentTransfer.fileSize)
+                    if (fileStream != null)
                     {
-                        sendFile.currentTransfer.status = Transfer.Status.Finished;
-                        finishedTransfers.Add(sendFile.currentTransfer);
-                        inboundTransfers.Remove(IPAddress.Parse(sendFile.currentTransfer.from.ipAddress));
+                        sendFile.currentTransfer.progress =
+                            (float)fileStream.Position / sendFile.currentTransfer.fileSize;
+                        if (fileStream.Position == sendFile.currentTransfer.fileSize)
+                        {
+                            sendFile.currentTransfer.status = Transfer.Status.Finished;
+                            finishedTransfers.Add(sendFile.currentTransfer);
+                            inboundTransfers.Remove(IPAddress.Parse(sendFile.currentTransfer.from.IpAddress));
+                        }
                     }
                 }
                 try
                 {
-                    int _byteLength = stream.EndRead(_result);
-                    if (_byteLength <= 0)
+                    var byteLength = stream.EndRead(result);
+                    if (byteLength <= 0)
                     {
                         Disconnect();
                         Purge();
                         return;
                     }
                     GC.Collect();
-                    _data = new byte[_byteLength];
-                    Array.Copy(receiveBuffer, _data, _byteLength);
+                    data = new byte[byteLength];
+                    Array.Copy(receiveBuffer, data, byteLength);
 
 
                     t = new Task(() =>
                     {
-                        fileStream.Write(_data, 0, _data.Length);
+                        fileStream.Write(data, 0, data.Length);
                     });
                     t.Start();
                     stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
                 }
-                catch (Exception _ex)
+                catch (Exception ex)
                 {
                     //Console.WriteLine($"Error receiving TCP data: {_ex}");
                     Disconnect();
@@ -330,14 +333,11 @@ namespace FileteleporterTransfert.Network
 
             public void Disconnect()
             {
-                if (fileStream != null)
-                    fileStream.Close();
+                fileStream?.Close();
                 fileStream = null;
-                if(socket != null)
-                {
-                    socket.Close();
-                    socket = null;
-                }
+                if (socket == null) return;
+                socket.Close();
+                socket = null;
             }
 
             public void Purge()

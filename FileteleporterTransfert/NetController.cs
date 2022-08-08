@@ -7,25 +7,25 @@ using System.Threading.Tasks;
 
 namespace FileteleporterTransfert
 {
-    class NetController
+    public class NetController
     {
         public enum ActionOnController
         {
-            testCon,
-            discoverReturn,
-            transferAck,
-            showTransfers,
-            infos
+            TestCon,
+            DiscoverReturn,
+            TransferAck,
+            ShowTransfers,
+            Infos
         }
 
         public enum ActionOnTransferer
         {
-            testCon,
-            discover,
-            connect,
-            disconnect,
-            transfer,
-            infos
+            TestCon,
+            Discover,
+            Connect,
+            Disconnect,
+            Transfer,
+            Infos
         }
 
 
@@ -83,8 +83,8 @@ namespace FileteleporterTransfert
         /// <param name="parameters">A list of params. Must not contain semicolon</param>
         public void SendData(ActionOnController aController, string[] parameters = null)
         {
-            bool part1 = sendSocket.Poll(1000, SelectMode.SelectRead);
-            bool part2 = (sendSocket.Available == 0);
+            var part1 = sendSocket.Poll(1000, SelectMode.SelectRead);
+            var part2 = (sendSocket.Available == 0);
             if (part1 && part2)
             {
                 onConnectAction = () => { SendData(aController, parameters); };
@@ -97,17 +97,17 @@ namespace FileteleporterTransfert
             {
                 Task.Run(() =>
                 {
-                    string dataToSend = $"{aController}@";
+                    var dataToSend = $"{aController}@";
                     if (parameters != null)
                     {
-                        for (int i = 0; i < parameters.Length; i++)
+                        for (var i = 0; i < parameters.Length; i++)
                         {
                             dataToSend += parameters[i];
                             if (i != parameters.Length - 1)
                                 dataToSend += ";";
                         }
                     }
-                    byte[] bytesSent = Encoding.ASCII.GetBytes(dataToSend);
+                    var bytesSent = Encoding.ASCII.GetBytes(dataToSend);
                     if (sendSocket == null)
                         return;
 
@@ -119,14 +119,14 @@ namespace FileteleporterTransfert
         #endregion
 
         #region Receive
-        const int BUFFERSIZE = 1024;
-        byte[] buffer = new byte[BUFFERSIZE];
+        const int Buffersize = 1024;
+        byte[] buffer = new byte[Buffersize];
         private Socket rcvSocket;
 
         private void ConnectReceiveSocket()
         {
 
-            IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(ip), portReceive);
+            var ipe = new IPEndPoint(IPAddress.Parse(ip), portReceive);
             receiveSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             receiveSocket.Bind(ipe);
@@ -138,14 +138,14 @@ namespace FileteleporterTransfert
         {
             rcvSocket = receiveSocket.EndAccept(result);
 
-            rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
+            rcvSocket.BeginReceive(buffer, 0, Buffersize, 0, ReadCallback, null);
         }
 
         public void ReadCallback(IAsyncResult ar)
         {
             try
             {
-                int read = rcvSocket.EndReceive(ar);
+                var read = rcvSocket.EndReceive(ar);
 
                 if (read <= 0)
                 {
@@ -153,14 +153,14 @@ namespace FileteleporterTransfert
                     EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint}");
                 }
 
-                byte[] _data = new byte[read];
-                Array.Copy(buffer, _data, read);
+                byte[] data = new byte[read];
+                Array.Copy(buffer, data, read);
 
                 Task.Run(() =>
                 {
-                    handleNetController.Handle(_data);
+                    handleNetController.Handle(data);
                 });
-                rcvSocket.BeginReceive(buffer, 0, BUFFERSIZE, 0, ReadCallback, null);
+                rcvSocket.BeginReceive(buffer, 0, Buffersize, 0, ReadCallback, null);
             }catch
             {
                 EZConsole.WriteLine("NetController", $"Connection closed with {rcvSocket.RemoteEndPoint}");

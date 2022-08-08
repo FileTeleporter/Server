@@ -9,10 +9,11 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FileteleporterTransfert.Client;
 
 namespace FileteleporterTransfert
 {
-    class HandleNetController
+    public class HandleNetController
     {
         Dictionary<NetController.ActionOnTransferer, Action<string[]>> packetHandler;
 
@@ -25,12 +26,12 @@ namespace FileteleporterTransfert
         {
             packetHandler = new Dictionary<NetController.ActionOnTransferer, Action<string[]>>()
             {
-                { NetController.ActionOnTransferer.testCon, TestConnection},
-                { NetController.ActionOnTransferer.discover,  Discover},
-                { NetController.ActionOnTransferer.connect,  ConnectToSrv},
-                { NetController.ActionOnTransferer.disconnect, Disconnect },
-                { NetController.ActionOnTransferer.transfer, Transfer },
-                { NetController.ActionOnTransferer.infos, ShowInfos },
+                { NetController.ActionOnTransferer.TestCon, TestConnection},
+                { NetController.ActionOnTransferer.Discover,  Discover},
+                { NetController.ActionOnTransferer.Connect,  ConnectToSrv},
+                { NetController.ActionOnTransferer.Disconnect, Disconnect },
+                { NetController.ActionOnTransferer.Transfer, Transfer },
+                { NetController.ActionOnTransferer.Infos, ShowInfos },
             };
         }
 
@@ -62,7 +63,7 @@ namespace FileteleporterTransfert
         public void TestConnection(string[] parameters)
         {
             EZConsole.WriteLine("handle", "Connection ok");
-            NetController.instance.SendData(NetController.ActionOnController.testCon);
+            NetController.instance.SendData(NetController.ActionOnController.TestCon);
         }
 
         public void Discover(string[] parameters)
@@ -72,26 +73,26 @@ namespace FileteleporterTransfert
 
         public void ConnectToSrv(string[] parameters)
         {
-            if (client.Client.instance == null)
+            if (Client.Client.instance == null)
             {
                 EZConsole.WriteLine("handle", $"Connect to {parameters[0]}");
-                client.Client connectClient = new client.Client(parameters[0], Environment.MachineName);
-                client.Client.instance.ConnectToServer();
-                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Client connected to {client.Client.instance.ip} as {Environment.MachineName}" });
+                Client.Client connectClient = new Client.Client(parameters[0], Environment.MachineName);
+                Client.Client.instance.ConnectToServer();
+                NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Client connected to {Client.Client.instance.ip} as {Environment.MachineName}" });
             }
             else
             {
                 EZConsole.WriteLine("handle", $"Client could not connect to the new server");
-                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Client could not connect to the new server" });
+                NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "Client could not connect to the new server" });
             }
         }
 
         public void Disconnect(string[] parameters)
         {
-            if (client.Client.instance != null)
+            if (Client.Client.instance != null)
             {
-                EZConsole.WriteLine("handle", $"Disconnect from {client.Client.instance.ip}");
-                client.Client.instance.Disconnect();
+                EZConsole.WriteLine("handle", $"Disconnect from {Client.Client.instance.ip}");
+                Client.Client.instance.Disconnect();
             }
         }
 
@@ -105,7 +106,7 @@ namespace FileteleporterTransfert
                 case "validate":
                     if(parameters.Length != 3)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer validate <ip> <dest. directory>" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer validate <ip> <dest. directory>" });
                         return;
                     }
                     if(SendFile.inboundTransfers.Count > 0)
@@ -119,7 +120,7 @@ namespace FileteleporterTransfert
                         }
                         else
                         {
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
                             return;
                         }
 
@@ -127,27 +128,27 @@ namespace FileteleporterTransfert
                             transfer.filepath = parameters[2];
                         else
                         {
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The path {parameters[2]} does not appear to be correct" });
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"The path {parameters[2]} does not appear to be correct" });
                             return;
                         }
-                        if (!server.ServerSend.ValidateDenyTransfer(true, iPAddress))
+                        if (!Server.ServerSend.ValidateDenyTransfer(true, iPAddress))
                         {
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Ip not found" });
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "Ip not found" });
                             return;
                         }
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Transfer has been validated" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "Transfer has been validated" });
                         EZConsole.WriteLine("handle", $"Transfer has been validated");
                     }
                     else
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "There is no transfer to validate" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "There is no transfer to validate" });
                         EZConsole.WriteLine("handle", $"No pending transfer");
                     }
                     break;
                 case "deny":
                     if (parameters.Length != 2)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer deny <ip>" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer deny <ip>" });
                         return;
                     }
                     if (SendFile.inboundTransfers.Count > 0)
@@ -163,24 +164,24 @@ namespace FileteleporterTransfert
                         }
                         else
                         {
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"The IP address {iPAddress} does not match an inbound transfer" });
                             return;
                         }
-                        if (!server.ServerSend.ValidateDenyTransfer(false, iPAddress))
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Ip not found" });
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "Transfer has been denied" });
+                        if (!Server.ServerSend.ValidateDenyTransfer(false, iPAddress))
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "Ip not found" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "Transfer has been denied" });
                         EZConsole.WriteLine("handle", $"Transfer has been denied");
                     }
                     else
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "There is no transfer to deny" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "There is no transfer to deny" });
                         EZConsole.WriteLine("handle", $"No pending transfer");
                     }
                     break;
                 case "list":
                     if (parameters.Length != 2)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list <pending/finished>" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer list <pending/finished>" });
                         return;
                     }
                     switch (parameters[1])
@@ -195,11 +196,11 @@ namespace FileteleporterTransfert
                                     transfers[i] = JsonSerializer.Serialize(item);
                                     i++;
                                 }
-                                NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
+                                NetController.instance.SendData(NetController.ActionOnController.ShowTransfers, transfers);
                             }
                             else
                             {
-                                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                                NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "No transfers to show" });
                             }
                             break;
                         case "pending":
@@ -217,57 +218,57 @@ namespace FileteleporterTransfert
                                     transfers[i] = JsonSerializer.Serialize(item);
                                     i++;
                                 }
-                                NetController.instance.SendData(NetController.ActionOnController.showTransfers, transfers);
+                                NetController.instance.SendData(NetController.ActionOnController.ShowTransfers, transfers);
                             }
                             else
                             {
-                                NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                                NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "No transfers to show" });
                             }
                             break;
                         default:
-                            NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer list <pending/finished>" });
+                            NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer list <pending/finished>" });
                             break;
                     }
                     break;
                 case "getFirstFinished":
                     if (parameters.Length != 1)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer get first finished" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer get first finished" });
                         return;
                     }
                     if(SendFile.finishedTransfers.Count > 0)
-                        NetController.instance.SendData(NetController.ActionOnController.showTransfers, new string[] { JsonSerializer.Serialize(SendFile.finishedTransfers[0]) });
+                        NetController.instance.SendData(NetController.ActionOnController.ShowTransfers, new string[] { JsonSerializer.Serialize(SendFile.finishedTransfers[0]) });
                     else
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to show" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "No transfers to show" });
                     break;
                 case "deleteFirstFinished":
                     if (parameters.Length != 1)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer delete first finished" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer delete first finished" });
                         return;
                     }
                     if (SendFile.finishedTransfers.Count > 0)
                     {
                         SendFile.finishedTransfers.RemoveAt(0);
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "First finished transfer deleted" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "First finished transfer deleted" });
                     }
                     else
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { "No transfers to delete" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { "No transfers to delete" });
                     break;
                 default:
                     if (parameters.Length != 1)
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"Usage : transfer <file's fullpath>" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"Usage : transfer <file's fullpath>" });
                         return;
                     }
                     if (Directory.Exists(Path.GetDirectoryName(parameters[0])))
                     {
                         // filepath, filelength
-                        client.ClientSend.AskForSendFile(parameters[0], new System.IO.FileInfo(parameters[0]).Length);
+                        ClientSend.AskForSendFile(parameters[0], new System.IO.FileInfo(parameters[0]).Length);
                     }
                     else
                     {
-                        NetController.instance.SendData(NetController.ActionOnController.infos, new string[] { $"The path {parameters[0]} does not appear to be correct" });
+                        NetController.instance.SendData(NetController.ActionOnController.Infos, new string[] { $"The path {parameters[0]} does not appear to be correct" });
                         return;
                     }
                     break;

@@ -1,21 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using FileteleporterTransfert.Network;
 using FileteleporterTransfert.Tools;
 
 namespace FileteleporterTransfert
 {
     class Program
     {
-        private static bool isRunning = false;
+        private static bool _isRunning = false;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             EZConsole.AddHeader("Server", "[SERVER]", ConsoleColor.DarkRed, ConsoleColor.White);
             EZConsole.AddHeader("Client", "[CLIENT]", ConsoleColor.Cyan, ConsoleColor.White);
@@ -26,17 +19,15 @@ namespace FileteleporterTransfert
             EZConsole.AddHeader("Discovery", "[DISCOVERY]", ConsoleColor.Yellow, ConsoleColor.White);
             EZConsole.AddHeader("SendFile", "[SENDFILE]", ConsoleColor.DarkCyan, ConsoleColor.Cyan);
             EZConsole.AddHeader("infos", "[INFOS]", ConsoleColor.Blue, ConsoleColor.White);
+            
 
-            NetController netController = new NetController("127.0.0.1", 56236, 56235);
+            Console.Title = "FileTeleporter Server";
+            _isRunning = true;
 
-
-            Console.Title = "Game Server";
-            isRunning = true;
-
-            Thread mainThread = new Thread(new ThreadStart(MainThread));
+            var mainThread = new Thread(MainThread);
             mainThread.Start();
 
-            server.Server.Start(50, 50, 26950);
+            Server.Server.Start(50, 50, 26950);
 
             Network.NetDiscovery.Discover();
         }
@@ -44,21 +35,21 @@ namespace FileteleporterTransfert
         private static void MainThread()
         {
             EZConsole.WriteLine($"Main thread started. Running at {Constants.TICKS_PER_SEC} ticks per second.", ConsoleColor.Green);
-            DateTime _nextLoop = DateTime.Now;
+            var nextLoop = DateTime.Now;
 
-            while (isRunning)
+            while (_isRunning)
             {
-                while (_nextLoop < DateTime.Now)
+                while (nextLoop < DateTime.Now)
                 {
                     // If the time for the next loop is in the past, aka it's time to execute another tick
                     GameLogic.Update(); // Execute game logic
 
-                    _nextLoop = _nextLoop.AddMilliseconds(Constants.MS_PER_TICK); // Calculate at what point in time the next tick should be executed
+                    nextLoop = nextLoop.AddMilliseconds(Constants.MS_PER_TICK); // Calculate at what point in time the next tick should be executed
 
-                    if (_nextLoop > DateTime.Now)
+                    if (nextLoop > DateTime.Now)
                     {
                         // If the execution time for the next tick is in the future, aka the server is NOT running behind
-                        Thread.Sleep(_nextLoop - DateTime.Now); // Let the thread sleep until it's needed again.
+                        Thread.Sleep(nextLoop - DateTime.Now); // Let the thread sleep until it's needed again.
                     }
                 }
             }

@@ -9,7 +9,7 @@ namespace FileteleporterTransfert.Tools
     public static class EZConsole
     {
 
-        private static Dictionary<string, Header> senderHeaders = new Dictionary<string, Header>();
+        private static Dictionary<string, Header> senderHeaders = new();
 
         private class Header
         {
@@ -64,8 +64,8 @@ namespace FileteleporterTransfert.Tools
             {
                 if (senderHeaders.ContainsKey(headerType))
                 {
-                    Header header = senderHeaders[headerType];
-                    ConsoleColor defaultColor = Console.ForegroundColor;
+                    var header = senderHeaders[headerType];
+                    var defaultColor = Console.ForegroundColor;
                     Console.ForegroundColor = header.headerColor;
                     Console.Write(header.header + " ");
                     Console.ForegroundColor = header.textColor;

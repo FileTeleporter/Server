@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using FileteleporterTransfert.Tools;
 using FileteleporterTransfert.Network;
+using FileteleporterTransfert.Server;
 
-namespace server
+namespace FileteleporterTransfert.Server
 {
     class Server
     {
@@ -86,7 +86,7 @@ namespace server
 
                     inboundTransfers[i] = sendFile;
 
-                    EZConsole.WriteLine("SendFile", $"Inbound transfer from {transfer.from.name} ({_client.Client.RemoteEndPoint}) at place {i}");
+                    EZConsole.WriteLine("SendFile", $"Inbound transfer from {transfer.from.Name} ({_client.Client.RemoteEndPoint}) at place {i}");
                     return;
                 }
             }
@@ -170,8 +170,8 @@ namespace server
 
             packetHandlers = new Dictionary<int, PacketHandler>()
             {
-                { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
-                { (int)ClientPackets.askSendFile, ServerHandle.AskSendFile },
+                { (int)ClientPackets.WelcomeReceived, ServerHandle.WelcomeReceived },
+                { (int)ClientPackets.AskSendFile, ServerHandle.AskSendFile },
             };
             EZConsole.WriteLine("Server", "Initialized packets.");
         }

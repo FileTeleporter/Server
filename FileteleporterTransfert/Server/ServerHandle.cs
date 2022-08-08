@@ -9,7 +9,7 @@ using FileteleporterTransfert;
 using FileteleporterTransfert.Network;
 using System.Net;
 
-namespace server
+namespace FileteleporterTransfert.Server
 {
     class ServerHandle
     {
@@ -54,7 +54,7 @@ namespace server
                         null,
                         SendFile.Transfer.Status.Initialised));
 
-            NetController.instance.SendData(NetController.ActionOnController.transferAck, new string[] { fileName, fileSize.ToString(), Server.clients[_fromClient].name });
+            NetController.instance.SendData(NetController.ActionOnController.TransferAck, new string[] { fileName, fileSize.ToString(), Server.clients[_fromClient].name });
         }
     }
 }

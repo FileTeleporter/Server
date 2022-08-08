@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using static client.Client;
+using static FileteleporterTransfert.Client.Client;
 using System.Net;
 using FileteleporterTransfert.Network;
 
-namespace server
+namespace FileteleporterTransfert.Server
 {
     class ServerSend
     {
@@ -87,7 +87,7 @@ namespace server
         /// <param name="_msg">The message to send.</param>
         public static void Welcome(int _toClient, string _msg)
         {
-            using (Packet _packet = new Packet((int)ServerPackets.welcome))
+            using (Packet _packet = new Packet((int)ServerPackets.Welcome))
             {
                 _packet.Write(_msg);
                 _packet.Write(Environment.MachineName);
@@ -99,14 +99,14 @@ namespace server
 
         public static bool ValidateDenyTransfer(bool validate, IPAddress iPAddress)
         {
-            using (Packet _packet = new Packet((int)ServerPackets.validateDenyTransfer))
+            using (Packet _packet = new Packet((int)ServerPackets.ValidateDenyTransfer))
             {
                 _packet.Write(validate);
 
                 int clientId;
                 try
                 {
-                    clientId = server.Server.clientsIp.First(x => x.Value.ToString() == iPAddress.ToString()).Key;
+                    clientId = Server.clientsIp.First(x => x.Value.ToString() == iPAddress.ToString()).Key;
                 }
                 catch (Exception e)
                 {

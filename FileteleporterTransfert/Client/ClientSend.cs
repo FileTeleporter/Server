@@ -1,32 +1,28 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System;
+﻿using System;
 using System.IO;
-using System.Net.Sockets;
-using static client.Client;
-using System.Threading.Tasks;
 using System.Net;
 using FileteleporterTransfert.Network;
+using static FileteleporterTransfert.Client.Client;
 
-namespace client
+namespace FileteleporterTransfert.Client
 {
     public class ClientSend
     {
         #region Send data
         /// <summary>Sends a packet to the server via TCP.</summary>
-        /// <param name="_packet">The packet to send to the sever.</param>
-        private static void SendTCPData(Packet _packet)
+        /// <param name="packet">The packet to send to the sever.</param>
+        private static void SendTcpData(Packet packet)
         {
-            _packet.WriteLength();
-            Client.instance.tcp.SendData(_packet);
+            packet.WriteLength();
+            instance.tcp.SendData(packet);
         }
 
         /// <summary>Sends a packet to the server via UDP.</summary>
-        /// <param name="_packet">The packet to send to the sever.</param>
-        private static void SendUDPData(Packet _packet)
+        /// <param name="packet">The packet to send to the sever.</param>
+        private static void SendUdpData(Packet packet)
         {
-            _packet.WriteLength();
-            Client.instance.udp.SendData(_packet);
+            packet.WriteLength();
+            instance.udp.SendData(packet);
         }
         #endregion
 
@@ -34,45 +30,41 @@ namespace client
         /// <summary>Lets the server know that the welcome message was received.</summary>
         public static void WelcomeReceived()
         {
-            using (Packet _packet = new Packet((int)ClientPackets.welcomeReceived))
-            {
-                _packet.Write(Client.instance.myId);
-                _packet.Write(Client.instance.name);
+            using var packet = new Packet((int)ClientPackets.WelcomeReceived);
+            packet.Write(instance.myId);
+            packet.Write(instance.name);
 
-                SendTCPData(_packet);
-            }
+            SendTcpData(packet);
         }
 
         public static void AskForSendFile(string filepath, long fileSize)
         {
-            IPAddress to = IPAddress.Parse(Client.instance.ip);
-            if (FileteleporterTransfert.Network.SendFile.outboundTransfers.ContainsKey(to))
-                FileteleporterTransfert.Network.SendFile.outboundTransfers[to] = new FileteleporterTransfert.Network.SendFile.Transfer(
+            IPAddress to = IPAddress.Parse(instance.ip);
+            if (SendFile.outboundTransfers.ContainsKey(to))
+                SendFile.outboundTransfers[to] = new SendFile.Transfer(
                     filepath,
-                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
-                    new FileteleporterTransfert.Network.SendFile.Transfer.Machine(ClientHandle.serverMachineName, client.Client.instance.ip),
+                    new SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                    new SendFile.Transfer.Machine(ClientHandle.ServerMachineName, instance.ip),
                     fileSize,
                     0,
                     null,
-                    FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised);
+                    SendFile.Transfer.Status.Initialised);
             else
-                FileteleporterTransfert.Network.SendFile.outboundTransfers.Add(to,
-                    new FileteleporterTransfert.Network.SendFile.Transfer(
+                SendFile.outboundTransfers.Add(to,
+                    new SendFile.Transfer(
                         filepath,
-                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
-                        new FileteleporterTransfert.Network.SendFile.Transfer.Machine(ClientHandle.serverMachineName, client.Client.instance.ip),
+                        new SendFile.Transfer.Machine(Environment.MachineName, "127.0.0.1"),
+                        new SendFile.Transfer.Machine(ClientHandle.ServerMachineName, instance.ip),
                         fileSize,
                         0,
                         null,
-                        FileteleporterTransfert.Network.SendFile.Transfer.Status.Initialised));
+                        SendFile.Transfer.Status.Initialised));
 
-            using (Packet _packet = new Packet((int)ClientPackets.askSendFile))
-            {
-                _packet.Write(Path.GetFileName(filepath));
-                _packet.Write(fileSize);
+            using var packet = new Packet((int)ClientPackets.AskSendFile);
+            packet.Write(Path.GetFileName(filepath));
+            packet.Write(fileSize);
 
-                SendTCPData(_packet);
-            }
+            SendTcpData(packet);
         }
         #endregion
     }
