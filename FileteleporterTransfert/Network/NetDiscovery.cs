@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
@@ -12,40 +13,62 @@ namespace FileteleporterTransfert.Network
     public static class NetDiscovery
     {
         private static UdpClient _udpClient;
-        private static readonly Dictionary<IPAddress, string> Machines = new();
+        public static readonly Dictionary<IPAddress, string> Machines = new();
+        private static readonly Dictionary<IPAddress, IPAddress> IpsAndBc = new();
         public static void Discover()
         {
-            // ip and broadcast
-            var ipsAndBc = new Dictionary<IPAddress, IPAddress>();
-            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (ni.OperationalStatus == OperationalStatus.Down) continue;
-                foreach (var unicastIp in ni.GetIPProperties().UnicastAddresses)
-                {
-                    if(unicastIp.Address.AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        ipsAndBc.Add(unicastIp.Address, GetBroadcastAddress(unicastIp));
-                    }
-                }
-            }
+           RefreshInterfaces(); 
 
             _udpClient = new UdpClient();
             _udpClient.Client.Bind(new IPEndPoint(IPAddress.Any.Address, Constants.DISCOVERY_PORT));
             ReceiveBroadcast();
-            foreach (var keyValuePair in ipsAndBc)
+            foreach (var keyValuePair in IpsAndBc)
             {
-                var message = Environment.MachineName;
-                message += $";{keyValuePair.Key}";
+                var message = $"connect;{Environment.MachineName};{keyValuePair.Key}";
                 var bMessage = Encoding.UTF8.GetBytes(message);
                 _udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), Constants.DISCOVERY_PORT);
                 EZConsole.WriteLine("Discovery", "sent : " + message + " to : " + keyValuePair.Value);
             }
         }
 
+        public static void Disconnect()
+        {
+            foreach (var keyValuePair in IpsAndBc)
+            {
+                var message = $"disconnect;{Environment.MachineName};{keyValuePair.Key}";
+                var bMessage = Encoding.UTF8.GetBytes(message);
+                _udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), Constants.DISCOVERY_PORT);
+                EZConsole.WriteLine("Discovery", "sent : " + message + " to : " + keyValuePair.Value);
+            }
+            Machines.Clear();
+        }
+
+        private static void RefreshInterfaces()
+        {
+            // ip and broadcast
+            foreach (var l in IpsAndBc)
+            {
+                IpsAndBc.Remove(l.Key);
+            }
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus == OperationalStatus.Down) continue;
+                foreach (var unicastIp in ni.GetIPProperties().UnicastAddresses)
+                {
+                    if (unicastIp.Address.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        IpsAndBc.Add(unicastIp.Address, GetBroadcastAddress(unicastIp));
+                    }
+                }
+            }
+
+        }
+
         private static async void ReceiveBroadcast()
         {
             while(true)
             {
+                var action = "";
                 var pcName = "";
                 var pcIp = "";
                 await Task.Run(() =>
@@ -56,13 +79,19 @@ namespace FileteleporterTransfert.Network
                     //if the program receive info about another pc
 
                     var messageSplited = recvMessage.Split(";");
-                    pcName = messageSplited[0];
-                    pcIp = messageSplited[1];
+                    action = messageSplited[0];
+                    pcName = messageSplited[1];
+                    pcIp = messageSplited[2];
                     var ip = IPAddress.Parse(pcIp);
                     if (Machines.ContainsKey(ip)) return;
                     if (pcName == Environment.MachineName) return;
-                    Machines.Add(ip, pcName);
-                    EZConsole.WriteLine("Discovery", $"received {pcName} {pcIp}");
+                    if(action == "connect") Machines.Add(ip, pcName);
+                    if (action == "disconnect")
+                    {
+                        if (Machines.ContainsKey(ip)) Machines.Remove(ip);
+                        else return;
+                    }
+                    EZConsole.WriteLine("Discovery", $"received {action} {pcName} {pcIp}");
 
                 });
             }
