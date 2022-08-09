@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using FileteleporterTransfert.Tools;
@@ -22,13 +21,29 @@ namespace FileteleporterTransfert.Network
             _udpClient = new UdpClient();
             _udpClient.Client.Bind(new IPEndPoint(IPAddress.Any.Address, Constants.DISCOVERY_PORT));
             ReceiveBroadcast();
+            SendDiscover(); 
+        }
+
+        private static void SendDiscover()
+        {
             foreach (var keyValuePair in IpsAndBc)
             {
-                var message = $"connect;{Environment.MachineName};{keyValuePair.Key}";
-                var bMessage = Encoding.UTF8.GetBytes(message);
-                _udpClient.Send(bMessage, bMessage.Length, keyValuePair.Value.ToString(), Constants.DISCOVERY_PORT);
-                EZConsole.WriteLine("Discovery", "sent : " + message + " to : " + keyValuePair.Value);
+                var msg = SendDiscover(keyValuePair.Key, keyValuePair.Value);
+                EZConsole.WriteLine("Discovery", $"sent : {msg} to :  {keyValuePair.Value}");
             }
+        }
+        /// <summary>
+        /// Send a discover packet for a specified address 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="broadcast"></param>
+        /// <returns>the message sent</returns>
+        private static string SendDiscover(IPAddress source, IPAddress broadcast)
+        {
+            var message = $"connect;{Environment.MachineName};{source}";
+            var bMessage = Encoding.UTF8.GetBytes(message);
+            _udpClient.Send(bMessage, bMessage.Length, broadcast.ToString(), Constants.DISCOVERY_PORT);
+            return message;
         }
 
         public static void Disconnect()
@@ -83,9 +98,12 @@ namespace FileteleporterTransfert.Network
                     pcName = messageSplited[1];
                     pcIp = messageSplited[2];
                     var ip = IPAddress.Parse(pcIp);
-                    if (Machines.ContainsKey(ip)) return;
                     if (pcName == Environment.MachineName) return;
-                    if(action == "connect") Machines.Add(ip, pcName);
+                    if (action == "connect" && !Machines.ContainsKey(ip))
+                    {
+                        Machines.Add(ip, pcName);
+                        SendDiscover();
+                    }
                     if (action == "disconnect")
                     {
                         if (Machines.ContainsKey(ip)) Machines.Remove(ip);

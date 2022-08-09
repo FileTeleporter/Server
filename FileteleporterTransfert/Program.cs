@@ -26,6 +26,8 @@ namespace FileteleporterTransfert
         }
 
         private static bool _isRunning;
+        private static Thread mainThread;
+        private static bool finish;
 
         private static void Main(string[] args)
         {
@@ -45,12 +47,12 @@ namespace FileteleporterTransfert
             Console.Title = "FileTeleporter Server";
             _isRunning = true;
 
-            var mainThread = new Thread(MainThread);
+            mainThread = new Thread(MainThread);
             mainThread.Start();
 
             Server.Server.Start(50, 50, Constants.MAIN_PORT);
 
-            Network.NetDiscovery.Discover();
+            NetDiscovery.Discover();
         }
 
         private static void MainThread()
@@ -58,11 +60,19 @@ namespace FileteleporterTransfert
             EZConsole.WriteLine($"Main thread started. Running at {Constants.TICKS_PER_SEC} ticks per second.",
                 ConsoleColor.Green);
             var nextLoop = DateTime.Now;
-
+            var finishNext = false;
             while (_isRunning)
             {
                 while (nextLoop < DateTime.Now)
                 {
+                    if (finishNext)
+                        Environment.Exit(0); 
+                    if (finish)
+                    {
+                        NetDiscovery.Disconnect();
+                        finishNext = true;
+                    }
+
                     // If the time for the next loop is in the past, aka it's time to execute another tick
                     GameLogic.Update(); // Execute game logic
 
@@ -87,10 +97,7 @@ namespace FileteleporterTransfert
                 case CtrlType.CTRL_LOGOFF_EVENT:
                 case CtrlType.CTRL_SHUTDOWN_EVENT:
                 case CtrlType.CTRL_CLOSE_EVENT:
-                    Console.WriteLine("test");
-                    EZConsole.WriteLine("infos","Closing...");
-                    ThreadManager.ExecuteOnMainThread(NetDiscovery.Disconnect);
-                    Environment.Exit(0);
+                    finish = true;
                     return true;
                 default:
                     return false;
